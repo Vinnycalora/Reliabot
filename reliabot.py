@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 import asyncio
 import db  # using the new db.py module
+from openai import OpenAI  
 
 # === Load Environment Variables ===
 load_dotenv()
@@ -39,7 +40,8 @@ async def on_ready():
 async def motivate(interaction: discord.Interaction, input: str = "I need motivation."):
     await interaction.response.defer()
     try:
-        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -49,6 +51,7 @@ async def motivate(interaction: discord.Interaction, input: str = "I need motiva
             max_tokens=100,
             temperature=0.9
         )
+
         message = response.choices[0].message.content.strip()
         await interaction.followup.send(f"🌟 {message}")
     except Exception as e:
