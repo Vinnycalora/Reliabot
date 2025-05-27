@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 
-DB_FILE = "reliabot.db"
+DB_FILE = "C:/Reliabot/reliabot.db"
 
 # === Connect & Initialize ===
 def init_db():
