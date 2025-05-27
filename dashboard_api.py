@@ -4,9 +4,20 @@ from typing import List
 import db
 import time
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
+
 
 START_TIME = time.time()
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # or ["*"] during dev
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # === Pydantic Models ===
 class Task(BaseModel):
