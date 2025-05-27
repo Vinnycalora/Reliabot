@@ -36,8 +36,8 @@ def get_tasks(user_id: str):
 
 @app.post("/task")
 def add_task(item: Task):
-    db.add_task(item.user_id, item.task)
-    return {"message": "Task added successfully."}
+    task_data = db.add_task(item.user_id, item.task)
+    return task_data
 
 @app.post("/done")
 def mark_task_done(item: DoneTask):

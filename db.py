@@ -63,9 +63,24 @@ def clear_reminder(user_id):
 def add_task(user_id, task):
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
-    cur.execute("INSERT INTO tasks (user_id, task) VALUES (?, ?)", (user_id, task))
+    created_at = datetime.now().isoformat()
+
+    cur.execute(
+        "INSERT INTO tasks (user_id, task, completed, created_at) VALUES (?, ?, 0, ?)",
+        (user_id, task, created_at)
+    )
+    task_id = cur.lastrowid
     conn.commit()
     conn.close()
+
+    return {
+        "id": task_id,
+        "user_id": user_id,
+        "task": task,
+        "completed": 0,
+        "created_at": created_at,
+        "completed_at": None
+    }
 
 def get_tasks(user_id):
     conn = sqlite3.connect(DB_FILE)
