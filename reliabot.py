@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
-import openai
 import os
 import random
 from dotenv import load_dotenv
@@ -12,7 +11,6 @@ from openai import OpenAI
 
 # === Load Environment Variables ===
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # === Discord Bot Setup ===
 intents = discord.Intents.default()
