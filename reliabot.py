@@ -199,6 +199,10 @@ async def guide_command(interaction: discord.Interaction):
         "(Daily DM Check-In runs automatically)")
     await interaction.response.send_message(help_text)
 
+@bot.tree.command(name="whoami", description="Check your Discord user ID")
+async def whoami(interaction: discord.Interaction):
+    await interaction.response.send_message(f"Your Discord user ID is: {interaction.user.id}")
+
 # === Daily Check-In Scheduler ===
 @tasks.loop(minutes=1)
 async def schedule_daily_checkins():
