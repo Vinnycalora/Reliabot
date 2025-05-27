@@ -1,7 +1,10 @@
 import sqlite3
 from datetime import datetime
+import os
 
-DB_FILE = "C:/Reliabot/reliabot.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_FILE = os.path.join(BASE_DIR, "reliabot.db")
+
 
 # === Connect & Initialize ===
 def init_db():
