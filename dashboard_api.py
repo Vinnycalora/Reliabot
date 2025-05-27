@@ -2,7 +2,10 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
 import db
+import time
+from datetime import datetime
 
+START_TIME = time.time()
 app = FastAPI()
 
 # === Pydantic Models ===
@@ -46,6 +49,15 @@ def get_summary(user_id: str):
         "total_completed": len(completed),
         "streak": db.get_streak(user_id)
     }
+
+@app.get("/status")
+def get_status():
+    return {
+        "status": "Bot is online",
+        "uptime": round(time.time() - START_TIME),
+        "timestamp": datetime.now().isoformat()
+    }
+
 
 # === Init DB on API startup ===
 @app.on_event("startup")
