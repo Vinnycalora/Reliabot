@@ -29,7 +29,7 @@ class DoneTask(BaseModel):
     task: str
 
 # === API Routes ===
-@app.get("/tasks/{user_id}", response_model=List[str])
+@app.get("/tasks/{user_id}")
 def get_tasks(user_id: str):
     tasks = db.get_tasks(user_id)
     return tasks
