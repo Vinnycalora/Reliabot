@@ -1,5 +1,6 @@
-/** @type {import('tailwindcss').Config} */
+﻿/** @type {import('tailwindcss').Config} */
 module.exports = {
+    darkMode: 'class', // 👈 enables manual dark mode toggling
     content: [
         "./index.html",
         "./src/**/*.{js,ts,jsx,tsx}",
@@ -9,3 +10,4 @@ module.exports = {
     },
     plugins: [],
 };
+
