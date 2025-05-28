@@ -85,10 +85,27 @@ def add_task(user_id, task):
 def get_tasks(user_id):
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
-    cur.execute("SELECT task FROM tasks WHERE user_id = ? AND completed = 0", (user_id,))
-    tasks = [row[0] for row in cur.fetchall()]
+    cur.execute("""
+        SELECT id, user_id, task, completed, created_at, completed_at
+        FROM tasks
+        WHERE user_id = ? AND completed = 0
+    """, (user_id,))
+    rows = cur.fetchall()
     conn.close()
+
+    tasks = []
+    for row in rows:
+        tasks.append({
+            "id": row[0],
+            "user_id": row[1],
+            "task": row[2],
+            "completed": row[3],
+            "created_at": row[4],
+            "completed_at": row[5],
+        })
     return tasks
+
+
 
 def complete_task(user_id, task):
     conn = sqlite3.connect(DB_FILE)
