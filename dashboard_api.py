@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+﻿from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
 import db
@@ -74,4 +74,7 @@ def get_status():
 # === Init DB on API startup ===
 @app.on_event("startup")
 def startup():
-    db.init_db()
+    try:
+        db.init_db()
+    except Exception as e:
+        print("❌ DB init failed:", e)
