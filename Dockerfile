@@ -15,5 +15,6 @@ COPY . .
 EXPOSE 8080
 
 # Run both the bot and the API server
-CMD ["uvicorn", "dashboard_api:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["bash", "-c", "uvicorn dashboard_api:app --host 0.0.0.0 --port 8080 & python reliabot.py"]
+
 
