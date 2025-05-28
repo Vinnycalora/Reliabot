@@ -9,27 +9,30 @@ function App() {
     const [streak, setStreak] = useState(null);
     const [summary, setSummary] = useState(null);
 
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
     useEffect(() => {
         if (currentTab === 'Status') {
-            fetch('https://reliabot-production.up.railway.app/status')
+            fetch(`${BASE_URL}/status`)
                 .then((res) => res.json())
                 .then((data) => setStatusData(data))
                 .catch((err) => console.error('Failed to fetch status:', err));
 
-            fetch('https://reliabot-production.up.railway.app/streak/test_user')
+            fetch(`${BASE_URL}/streak/test_user`)
                 .then((res) => res.json())
                 .then((data) => setStreak(data.streak))
                 .catch((err) => console.error('Failed to fetch streak:', err));
         }
 
         if (currentTab === 'Tasks') {
-            fetch('https://reliabot-production.up.railway.app/tasks/test_user')
+            fetch(`${BASE_URL}/tasks/test_user`)
                 .then((res) => res.json())
                 .then((data) => setTasks(data))
                 .catch((err) => console.error('Failed to fetch tasks:', err));
         }
+
         if (currentTab === 'Logs') {
-            fetch('https://reliabot-production.up.railway.app/summary/test_user')
+            fetch(`${BASE_URL}/summary/test_user`)
                 .then((res) => res.json())
                 .then((data) => {
                     setStreak(data.streak);
@@ -69,7 +72,6 @@ function App() {
                     {currentTab === 'Tasks' && (
                         <div>
                             <h2 className="text-2xl font-bold mb-4">Tasks</h2>
-
                             <form
                                 onSubmit={(e) => {
                                     e.preventDefault();
@@ -77,7 +79,7 @@ function App() {
                                     const newTask = taskInput.value.trim();
                                     if (!newTask) return;
 
-                                    fetch('https://reliabot-production.up.railway.app/task', {
+                                    fetch(`${BASE_URL}/task`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({
@@ -142,7 +144,7 @@ function App() {
                                                     {!task.completed && (
                                                         <button
                                                             onClick={() => {
-                                                                fetch('https://reliabot-production.up.railway.app/done', {
+                                                                fetch(`${BASE_URL}/done`, {
                                                                     method: 'POST',
                                                                     headers: { 'Content-Type': 'application/json' },
                                                                     body: JSON.stringify({
@@ -219,6 +221,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
