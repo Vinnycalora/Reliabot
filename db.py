@@ -25,16 +25,30 @@ def init_db():
     # Tasks table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT,
             task TEXT,
             completed INTEGER DEFAULT 0,
+            created_at TEXT,
+            completed_at TEXT,
             completed_date TEXT,
             FOREIGN KEY (user_id) REFERENCES users(user_id)
         )
     ''')
 
+    # Safe ALTERs (in case table already exists but columns are missing)
+    try: cur.execute("ALTER TABLE tasks ADD COLUMN created_at TEXT")
+    except sqlite3.OperationalError: pass
+
+    try: cur.execute("ALTER TABLE tasks ADD COLUMN completed_at TEXT")
+    except sqlite3.OperationalError: pass
+
+    try: cur.execute("ALTER TABLE tasks ADD COLUMN completed_date TEXT")
+    except sqlite3.OperationalError: pass
+
     conn.commit()
     conn.close()
+
 
 # === User Functions ===
 def get_user(user_id):
