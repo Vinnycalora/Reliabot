@@ -16,6 +16,16 @@ function App() {
     const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     useEffect(() => {
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
+            credentials: 'include'
+        })
+            .then(res => res.ok ? res.json() : null)
+            .then(data => setUser(data))
+            .catch(() => setUser(null));
+    }, []);
+
+
+    useEffect(() => {
         // Fetch authenticated user info
         fetch(`${BASE_URL}/me`, { credentials: 'include' })
             .then((res) => res.json())

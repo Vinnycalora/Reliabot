@@ -13,6 +13,7 @@ import os
 from dotenv import load_dotenv
 import requests
 from urllib.parse import urlencode
+from itsdangerous import URLSafeSerializer
 
 load_dotenv()
 
@@ -54,9 +55,34 @@ def get_tasks(user_id: str):
     return tasks
 
 @app.post("/task")
-def add_task(item: Task):
-    task_data = db.add_task(item.user_id, item.task)
-    return task_data
+async def add_task(request: Request):
+    user = request.session.get("user")
+    if not user:
+        return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+
+    try:
+        body = await request.json()
+        task_name = body.get("task")
+        if not task_name:
+            return JSONResponse(status_code=400, content={"detail": "Missing 'task'"})
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"detail": "Invalid JSON"})
+
+    username = user["username"]
+    today = date.today().isoformat()
+
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    # Insert task
+    c.execute(
+        "INSERT INTO tasks (username, task, date) VALUES (?, ?, ?)",
+        (username, task_name, today)
+    )
+    conn.commit()
+    conn.close()
+
+    return {"message": "Task added"}
 
 @app.post("/done")
 def mark_task_done(item: DoneTask):
