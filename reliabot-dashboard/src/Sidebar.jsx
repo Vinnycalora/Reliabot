@@ -3,6 +3,7 @@
         { label: 'Status', icon: '📊' },
         { label: 'Tasks', icon: '📝' },
         { label: 'Logs', icon: '📈' },
+        { label: 'Calendar', icon: '📅' },
     ];
 
     return (
@@ -32,8 +33,8 @@
                         key={tab.label}
                         onClick={() => setCurrentTab(tab.label)}
                         className={`flex flex-col items-center text-xs ${currentTab === tab.label
-                                ? 'text-sky-400 font-semibold'
-                                : 'text-gray-400 hover:text-white'
+                            ? 'text-sky-400 font-semibold'
+                            : 'text-gray-400 hover:text-white'
                             }`}
                     >
                         <span className="text-lg">{tab.icon}</span>

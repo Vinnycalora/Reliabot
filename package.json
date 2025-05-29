@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "framer-motion": "^12.15.0"
+    "framer-motion": "^12.15.0",
+    "react-calendar": "^5.1.0"
   }
 }

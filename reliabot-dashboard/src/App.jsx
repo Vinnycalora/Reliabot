@@ -3,6 +3,9 @@ import Sidebar from './Sidebar';
 import { motion, AnimatePresence } from 'framer-motion';  // ✅ used for tab transitions and task animations
 import Navbar from './Navbar';
 import GlitchLoader from './GlitchLoader';
+import CalendarView from './CalendarView';
+// ... then render <CalendarView /> when `currentTab === "Calendar"`
+
 
 function App() {
     const [currentTab, setCurrentTab] = useState('Status');
@@ -94,6 +97,21 @@ function App() {
                             </motion.div>
                         )}
                     </AnimatePresence>
+                    <AnimatePresence mode="wait">
+                        {currentTab === 'Calendar' && (
+                            <motion.div
+                                key="calendar"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.3 }}
+                                className="space-y-4"
+                            >
+                                <CalendarView />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
 
                     <AnimatePresence mode="wait">
                         {currentTab === 'Tasks' && (
