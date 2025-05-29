@@ -22,10 +22,15 @@ START_TIME = time.time()
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key=os.environ["SESSION_SECRET"])
 
+origins = [
+    "http://localhost:5173",                  # local dev
+    "https://reliabot.netlify.app",           # production
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,  # <-- required for cookies/sessions
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
