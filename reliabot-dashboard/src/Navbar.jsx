@@ -4,10 +4,19 @@
             <h1 className="text-2xl font-semibold tracking-wide text-sky-400 drop-shadow-md">
                 🔥 Reliabot Dashboard
             </h1>
-            <span className="text-sm text-gray-400">v1.0</span>
+            <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-400">v1.0</span>
+                <a
+                    href={`https://discord.com/oauth2/authorize?client_id=${import.meta.env.VITE_DISCORD_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_DISCORD_REDIRECT_URI}&response_type=code&scope=identify`}
+                    className="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded transition duration-200 shadow"
+                >
+                    Login with Discord
+                </a>
+            </div>
         </header>
     );
 }
 
 export default Navbar;
+
 
