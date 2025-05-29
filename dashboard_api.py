@@ -14,6 +14,8 @@ from dotenv import load_dotenv
 import requests
 from urllib.parse import urlencode
 from itsdangerous import URLSafeSerializer
+from fastapi.responses import JSONResponse
+
 
 load_dotenv()
 
@@ -23,14 +25,12 @@ START_TIME = time.time()
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key=os.environ["SESSION_SECRET"])
 
-origins = [
-    "http://localhost:5173",                  # local dev
-    "https://reliabot.netlify.app",           # production
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[
+        "http://localhost:5173",
+        "https://reliabot.netlify.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
