@@ -27,14 +27,19 @@ app.add_middleware(SessionMiddleware, secret_key=os.environ["SESSION_SECRET"])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://reliabot.netlify.app"
-    ],
+    allow_origins=["https://reliabot.netlify.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SESSION_SECRET"),
+    same_site="none",  # Required for cross-origin cookies
+    https_only=True     # Ensure cookies work on HTTPS Netlify
+)
+
 
 
 
