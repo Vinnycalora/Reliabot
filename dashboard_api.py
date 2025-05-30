@@ -23,8 +23,15 @@ load_dotenv()
 
 START_TIME = time.time()
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key=os.environ["SESSION_SECRET"])
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("SESSION_SECRET", "supersecretkey123"),
+    same_site="none",
+    https_only=True
+)
 
+
+# Allow cross-origin credentials from Netlify
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://reliabot.netlify.app"],
@@ -33,12 +40,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Secure cookie config for cross-origin auth
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.getenv("SESSION_SECRET"),
-    same_site="none",  # Required for cross-origin cookies
-    https_only=True     # Ensure cookies work on HTTPS Netlify
+    secret_key=os.getenv("SESSION_SECRET", "supersecretkey123"),
+    same_site="none",     # THIS is what allows frontend/backend across domains
+    https_only=True       # Must be True for Netlify + Railway HTTPS
 )
+
 
 
 
@@ -76,7 +85,7 @@ async def add_task(request: Request):
     username = user["username"]
     today = date.today().isoformat()
 
-    conn = get_db_connection()
+    conn = db.get_db_connection()
     c = conn.cursor()
 
     # Insert task
@@ -188,3 +197,4 @@ async def discord_oauth(request: Request, code: str):
 
     # Redirect back to frontend
     return RedirectResponse(url="https://reliabot.netlify.app")
+
