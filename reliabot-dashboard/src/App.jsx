@@ -11,7 +11,8 @@ function App() {
     const [tasks, setTasks] = useState([]);
     const [streak, setStreak] = useState(null);
     const [summary, setSummary] = useState(null);
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(undefined);
+
 
     const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -58,13 +59,26 @@ function App() {
         fetchData();
     }, [user, currentTab, BASE_URL]);
 
-    if (!user) {
+    if (user === undefined) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-black text-white">
                 <GlitchLoader />
             </div>
         );
     }
+
+    if (user === null) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-black text-white">
+                <a href="https://reliabot-production.up.railway.app/oauth/discord">
+                    <button className="px-6 py-3 bg-sky-600 rounded-lg text-white font-bold hover:bg-sky-700">
+                        🔐 Log In with Discord
+                    </button>
+                </a>
+            </div>
+        );
+    }
+
 
     return (
         <div className="dark flex flex-col h-screen bg-black text-white">
