@@ -20,8 +20,11 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SESSION_SECRET", "supersecretkey123"),
     same_site="none",
-    https_only=True
+    https_only=True,
+    max_age=86400,  # optional: session cookie lasts 1 day
+    session_cookie="session"  # explicitly name the cookie
 )
+
 
 app.add_middleware(
     CORSMiddleware,
