@@ -70,12 +70,14 @@ function App() {
     if (user === null) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-black text-white">
-                <a href={`https://discord.com/api/oauth2/authorize?client_id=${import.meta.env.VITE_DISCORD_CLIENT_ID}&redirect_uri=https://reliabot.netlify.app/oauth/discord&response_type=code&scope=identify`}>
-
+                <a
+                    href={`https://discord.com/api/oauth2/authorize?client_id=${import.meta.env.VITE_DISCORD_CLIENT_ID}&redirect_uri=https://reliabot-production.up.railway.app/oauth/discord&response_type=code&scope=identify`}
+                >
                     <button className="px-6 py-3 bg-sky-600 rounded-lg text-white font-bold hover:bg-sky-700">
                         🔐 Log In with Discord
                     </button>
                 </a>
+
             </div>
         );
     }
