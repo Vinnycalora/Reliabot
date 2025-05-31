@@ -1,28 +1,21 @@
-﻿from fastapi import FastAPI, HTTPException
+﻿from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
-from typing import List
 import db
 import time
-from datetime import datetime
+from datetime import datetime, date
 from fastapi.middleware.cors import CORSMiddleware
-import httpx
-from fastapi.responses import RedirectResponse
-from fastapi import Request
+from fastapi.responses import RedirectResponse, JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 import os
 from dotenv import load_dotenv
 import requests
 from urllib.parse import urlencode
-from itsdangerous import URLSafeSerializer
-from fastapi.responses import JSONResponse
-
 
 load_dotenv()
 
-
-
 START_TIME = time.time()
 app = FastAPI()
+
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SESSION_SECRET", "supersecretkey123"),
@@ -30,8 +23,6 @@ app.add_middleware(
     https_only=True
 )
 
-
-# Allow cross-origin credentials from Netlify
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://reliabot.netlify.app"],
@@ -40,33 +31,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Secure cookie config for cross-origin auth
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.getenv("SESSION_SECRET", "supersecretkey123"),
-    same_site="none",     # THIS is what allows frontend/backend across domains
-    https_only=True       # Must be True for Netlify + Railway HTTPS
-)
-
-
-
-
-
-
-# === Pydantic Models ===
 class Task(BaseModel):
-    user_id: str
     task: str
 
 class DoneTask(BaseModel):
     user_id: str
     task: str
 
-# === API Routes ===
 @app.get("/tasks/{user_id}")
 def get_tasks(user_id: str):
-    tasks = db.get_tasks(user_id)
-    return tasks
+    return db.get_tasks(user_id)
 
 @app.post("/task")
 async def add_task(request: Request):
@@ -74,41 +48,22 @@ async def add_task(request: Request):
     if not user:
         return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
 
-    try:
-        body = await request.json()
-        task_name = body.get("task")
-        if not task_name:
-            return JSONResponse(status_code=400, content={"detail": "Missing 'task'"})
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"detail": "Invalid JSON"})
+    body = await request.json()
+    task_name = body.get("task")
+    if not task_name:
+        return JSONResponse(status_code=400, content={"detail": "Missing 'task'"})
 
-    username = user["username"]
-    today = date.today().isoformat()
-
-    conn = db.get_db_connection()
-    c = conn.cursor()
-
-    # Insert task
-    c.execute(
-        "INSERT INTO tasks (username, task, date) VALUES (?, ?, ?)",
-        (username, task_name, today)
-    )
-    conn.commit()
-    conn.close()
-
-    return {"message": "Task added"}
+    return db.add_task(user["id"], task_name)
 
 @app.post("/done")
 def mark_task_done(item: DoneTask):
-    success = db.complete_task(item.user_id, item.task)
-    if not success:
-        raise HTTPException(status_code=404, detail="Task not found.")
-    return {"message": "Task marked as done."}
+    if db.complete_task(item.user_id, item.task):
+        return {"message": "Task marked as done."}
+    raise HTTPException(status_code=404, detail="Task not found.")
 
 @app.get("/streak/{user_id}")
 def get_streak(user_id: str):
-    count = db.get_streak(user_id)
-    return {"streak": count}
+    return {"streak": db.get_streak(user_id)}
 
 @app.get("/summary/{user_id}")
 def get_summary(user_id: str):
@@ -130,28 +85,13 @@ def get_status():
 
 @app.get("/me")
 def get_logged_in_user(request: Request):
-    if "user" not in request.session:
+    user = request.session.get("user")
+    if not user:
         raise HTTPException(status_code=401, detail="Not logged in")
-    return request.session["user"]
-
-@app.get("/whoami")
-def whoami(request: Request):
-    return request.session.get("user", "Not logged in")
-
-
-# === Init DB on API startup ===
-@app.on_event("startup")
-def startup():
-    try:
-        db.init_db()
-    except Exception as e:
-        print("❌ DB init failed:", e)
+    return user
 
 @app.get("/oauth/discord")
 async def discord_oauth(request: Request, code: str):
-    token_url = "https://discord.com/api/oauth2/token"
-    user_url = "https://discord.com/api/users/@me"
-
     data = {
         "client_id": os.environ["DISCORD_CLIENT_ID"],
         "client_secret": os.environ["DISCORD_CLIENT_SECRET"],
@@ -161,40 +101,22 @@ async def discord_oauth(request: Request, code: str):
         "scope": "identify",
     }
 
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-
-    print("DATA SENT TO DISCORD TOKEN ENDPOINT:")
-    print(data)
-
-
-    token_response = requests.post(
-    "https://discord.com/api/oauth2/token",
-    data=urlencode(data),
-    headers=headers
-    )
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    token_response = requests.post("https://discord.com/api/oauth2/token", data=urlencode(data), headers=headers)
     token_response.raise_for_status()
-
     access_token = token_response.json()["access_token"]
 
-    user_headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
-
-    user_response = requests.get(user_url, headers=user_headers)
+    user_response = requests.get("https://discord.com/api/users/@me", headers={"Authorization": f"Bearer {access_token}"})
     user_response.raise_for_status()
-
     user = user_response.json()
-    user_id = user["id"]
-    username = f"{user['username']}#{user['discriminator']}"
 
-    # Store in session
     request.session["user"] = {
-        "id": user_id,
-        "username": username
+        "id": user["id"],
+        "username": f"{user['username']}#{user['discriminator']}"
     }
 
-    # Redirect back to frontend
     return RedirectResponse(url="https://reliabot.netlify.app")
 
+@app.on_event("startup")
+def startup():
+    db.init_db()

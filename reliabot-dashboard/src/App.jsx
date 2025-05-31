@@ -11,29 +11,16 @@ function App() {
     const [tasks, setTasks] = useState([]);
     const [streak, setStreak] = useState(null);
     const [summary, setSummary] = useState(null);
-    const [user, setUser] = useState(null); // New: user from Discord OAuth
+    const [user, setUser] = useState(null);
 
     const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+    // Fixed: only one call to fetch /me
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/me`, {
-            credentials: 'include'
-        })
+        fetch(`${BASE_URL}/me`, { credentials: 'include' })
             .then(res => res.ok ? res.json() : null)
             .then(data => setUser(data))
             .catch(() => setUser(null));
-    }, []);
-
-
-    useEffect(() => {
-        // Fetch authenticated user info
-        fetch(`${BASE_URL}/me`, { credentials: 'include' })
-            .then((res) => res.json())
-            .then((data) => setUser(data))
-            .catch((err) => {
-                console.error('Failed to fetch user info:', err);
-                setUser(null);
-            });
     }, []);
 
     useEffect(() => {
@@ -126,11 +113,8 @@ function App() {
                                             fetch(`${BASE_URL}/task`, {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({
-                                                    user_id: user.id,
-                                                    task: newTask,
-                                                    remind_time: new Date().toISOString(),
-                                                }),
+                                                credentials: 'include',
+                                                body: JSON.stringify({ task: newTask }),
                                             })
                                                 .then((res) => {
                                                     if (!res.ok) throw new Error('Failed to add task');
@@ -235,7 +219,6 @@ function App() {
 }
 
 export default App;
-
 
 
 
