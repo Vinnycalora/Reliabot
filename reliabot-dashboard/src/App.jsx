@@ -5,7 +5,7 @@ import Navbar from './Navbar';
 import GlitchLoader from './GlitchLoader';
 import CalendarView from './CalendarView';
 import AnalyticsChart from './AnalyticsChart';
-import HeatmapChart from './HeatmapChart';
+
 
 
 function App() {
@@ -230,7 +230,6 @@ function App() {
                                     </div>
 
                                     <AnalyticsChart userId={user.id} />
-                                    <HeatmapChart userId={user.id} />
 
                                     {!summary && <GlitchLoader />}
                                 </div>
