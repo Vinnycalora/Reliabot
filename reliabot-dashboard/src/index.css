@@ -79,3 +79,24 @@
         transform: translate(0, 0);
     }
 }
+
+.react-calendar-heatmap text {
+    fill: #999;
+}
+
+.color-empty {
+    fill: #1a1a1d;
+}
+
+.color-scale-1 {
+    fill: #0ea5e9;
+}
+
+.color-scale-2 {
+    fill: #0369a1;
+}
+
+.color-scale-3 {
+    fill: #082f49;
+}
+
