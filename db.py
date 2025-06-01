@@ -163,3 +163,8 @@ def set_last_dm(user_id, date):
         with conn.cursor() as cur:
             cur.execute("UPDATE users SET last_dm = %s WHERE user_id = %s", (date, user_id))
             conn.commit()
+
+
+def migrate_tasks_table():
+    # Add any migration logic here if needed in the future
+    pass
