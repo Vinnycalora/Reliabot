@@ -13,7 +13,6 @@ from urllib.parse import urlencode
 from collections import defaultdict
 from db import migrate_tasks_table
 from fastapi import Depends
-from db import get_db
 
 
 load_dotenv()
@@ -51,7 +50,7 @@ def get_tasks(user_id: str):
     return db.get_tasks(user_id)
 
 @app.post("/task")
-async def create_task(request: Request, db=Depends(get_db)):
+async def create_task(request: Request):
     user = request.session.get("user")
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
