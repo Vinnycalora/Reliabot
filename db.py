@@ -113,27 +113,28 @@ def add_task(user_id, task):
     }
 
 def get_tasks(user_id):
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT id, user_id, task, completed, created_at, completed_at
-        FROM tasks
-        WHERE user_id = ? AND completed = 0
-    """, (user_id,))
-    rows = cur.fetchall()
-    conn.close()
+    with sqlite3.connect("reliabot.db") as conn:
+        cursor = conn.execute("""
+            SELECT id, user_id, task, description, due_at, completed, created_at, completed_at
+            FROM tasks
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+        """, (user_id,))
+        rows = cursor.fetchall()
+        return [
+            {
+                "id": row[0],
+                "user_id": row[1],
+                "task": row[2],
+                "description": row[3],
+                "due_at": row[4],
+                "completed": row[5],
+                "created_at": row[6],
+                "completed_at": row[7],
+            }
+            for row in rows
+        ]
 
-    tasks = []
-    for row in rows:
-        tasks.append({
-            "id": row[0],
-            "user_id": row[1],
-            "task": row[2],
-            "completed": row[3],
-            "created_at": row[4],
-            "completed_at": row[5],
-        })
-    return tasks
 
 
 
