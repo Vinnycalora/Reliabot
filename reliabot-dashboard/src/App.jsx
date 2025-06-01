@@ -13,6 +13,9 @@ function App() {
     const [streak, setStreak] = useState(null);
     const [summary, setSummary] = useState(null);
     const [user, setUser] = useState(undefined);
+    const dueDate = e.target.elements.due_at?.value.trim();
+    const description = e.target.elements.description?.value.trim();
+
 
     const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -134,7 +137,12 @@ function App() {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
                                                 credentials: 'include',
-                                                body: JSON.stringify({ task: newTask, description, due_at }),
+                                                body: JSON.stringify({
+                                                    name: newTask,
+                                                    due_at: dueDate || null,
+                                                    description: description || null,
+                                                }),
+
                                             })
                                                 .then((res) => {
                                                     if (!res.ok) throw new Error('Failed to add task');
