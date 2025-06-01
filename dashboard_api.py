@@ -13,6 +13,8 @@ from urllib.parse import urlencode
 from collections import defaultdict
 from db import migrate_tasks_table
 from fastapi import Depends
+import sqlite3
+
 
 
 load_dotenv()
