@@ -1,1 +1,1 @@
-fastapiuvicornrequestspython-dotenvpsycopg2-binarydiscord.py==2.4.0 
+fastapiuvicornrequestspython-dotenvpsycopg2-binarydiscord.py==2.4.0openai==1.23.6 
