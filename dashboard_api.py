@@ -10,6 +10,7 @@ import os
 from dotenv import load_dotenv
 import requests
 from urllib.parse import urlencode
+from collections import defaultdict
 
 load_dotenv()
 
@@ -119,6 +120,34 @@ async def discord_oauth(request: Request, code: str):
     }
 
     return RedirectResponse(url="https://reliabot.netlify.app")
+
+@app.get("/analytics/{user_id}")
+def get_analytics(user_id: str):
+    completed_tasks = db.get_completed_tasks(user_id)  # returns [(task_name, completed_date, created_at, completed_at)]
+
+    # Count completions by day
+    daily_counts = defaultdict(int)
+    completion_times = []
+
+    for task_name, date_str, created_at, completed_at in completed_tasks:
+        try:
+            completed_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            if (datetime.now().date() - completed_date).days <= 7:
+                daily_counts[completed_date.strftime("%Y-%m-%d")] += 1
+
+            if created_at and completed_at:
+                created = datetime.fromisoformat(created_at)
+                completed = datetime.fromisoformat(completed_at)
+                completion_times.append((completed - created).total_seconds())
+        except Exception as e:
+            print("Error parsing task:", e)
+
+    average_time = round(sum(completion_times) / len(completion_times), 2) if completion_times else 0
+
+    return {
+        "daily_counts": dict(daily_counts),
+        "average_completion_time_seconds": average_time
+    }
 
 @app.on_event("startup")
 def startup():

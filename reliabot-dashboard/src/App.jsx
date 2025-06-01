@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Navbar';
 import GlitchLoader from './GlitchLoader';
 import CalendarView from './CalendarView';
+import AnalyticsChart from './AnalyticsChart';
+
 
 function App() {
     const [currentTab, setCurrentTab] = useState('Status');
@@ -225,6 +227,9 @@ function App() {
                                         <div className="bg-[#0e0e10] p-5 rounded-2xl border border-gray-700 shadow-xl">✅ {summary?.completedThisWeek || 0} this week</div>
                                         <div className="bg-[#0e0e10] p-5 rounded-2xl border border-gray-700 shadow-xl">📈 {summary?.totalCompleted || 0} total</div>
                                     </div>
+
+                                    <AnalyticsChart userId={user.id} />
+
                                     {!summary && <GlitchLoader />}
                                 </div>
                             </motion.div>
