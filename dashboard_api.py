@@ -14,6 +14,9 @@ from collections import defaultdict
 from db import migrate_tasks_table
 from fastapi import Depends
 import sqlite3
+from pydantic import BaseModel
+from typing import Optional
+
 
 
 
@@ -39,6 +42,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class TaskCreate(BaseModel):
+    name: str
+    due_at: Optional[str] = None
+    description: Optional[str] = None
 
 class Task(BaseModel):
     task: str
