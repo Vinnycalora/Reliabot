@@ -139,7 +139,7 @@ function App() {
                                                 credentials: 'include',
                                                 body: JSON.stringify({
                                                     name: newTask,
-                                                    due_at: dueDate || null,
+                                                    due_at: due_at,
                                                     description: description || null,
                                                 }),
 
