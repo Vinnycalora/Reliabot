@@ -183,3 +183,29 @@ def startup():
 @app.on_event("startup")
 def init():
     migrate_tasks_table()
+
+@app.get("/init-db")
+def init_database():
+    import psycopg2
+    from os import getenv
+
+    sql = """
+    CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        task TEXT NOT NULL,
+        done INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP,
+        description TEXT,
+        due_date TIMESTAMP
+    );
+    """
+
+    conn = psycopg2.connect(getenv("DATABASE_URL"))
+    cur = conn.cursor()
+    cur.execute(sql)
+    conn.commit()
+    cur.close()
+    conn.close()
+    return {"status": "ok", "message": "Table created."}

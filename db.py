@@ -1,216 +1,165 @@
-import sqlite3
-from datetime import datetime
+import psycopg2
+import psycopg2.extras
 import os
+from datetime import datetime
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_FILE = os.path.join(BASE_DIR, "reliabot.db")
+DATABASE_URL = os.getenv("DATABASE_URL")  # Set this on Railway
 
+def get_connection():
+    return psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.DictCursor)
 
-# === Connect & Initialize ===
+# === Init / Migration ===
 def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id TEXT PRIMARY KEY,
+                    streak INTEGER DEFAULT 0,
+                    last_check TEXT,
+                    reminder_hour INTEGER,
+                    last_dm TEXT
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS tasks (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT,
+                    task TEXT,
+                    completed BOOLEAN DEFAULT FALSE,
+                    created_at TEXT,
+                    completed_at TEXT,
+                    completed_date TEXT,
+                    description TEXT DEFAULT '',
+                    due_at TEXT,
+                    FOREIGN KEY (user_id) REFERENCES users(user_id)
+                )
+            ''')
+            conn.commit()
 
-    # Users table
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            user_id TEXT PRIMARY KEY,
-            streak INTEGER DEFAULT 0,
-            last_check TEXT,
-            reminder_hour INTEGER,
-            last_dm TEXT
-        )
-    ''')
-
-    # Tasks table
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT,
-            task TEXT,
-            completed INTEGER DEFAULT 0,
-            created_at TEXT,
-            completed_at TEXT,
-            completed_date TEXT,
-            FOREIGN KEY (user_id) REFERENCES users(user_id)
-        )
-    ''')
-
-    # Safe ALTERs (in case table already exists but columns are missing)
-    try: cur.execute("ALTER TABLE tasks ADD COLUMN created_at TEXT")
-    except sqlite3.OperationalError: pass
-
-    try: cur.execute("ALTER TABLE tasks ADD COLUMN completed_at TEXT")
-    except sqlite3.OperationalError: pass
-
-    try: cur.execute("ALTER TABLE tasks ADD COLUMN completed_date TEXT")
-    except sqlite3.OperationalError: pass
-
-    conn.commit()
-    conn.close()
-
-def migrate_tasks_table():
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    try:
-        cursor.execute("ALTER TABLE tasks ADD COLUMN description TEXT DEFAULT ''")
-    except sqlite3.OperationalError:
-        pass  # Already exists
-
-    try:
-        cursor.execute("ALTER TABLE tasks ADD COLUMN due_at TEXT")
-    except sqlite3.OperationalError:
-        pass  # Already exists
-
-    conn.commit()
-    conn.close()
-
-
-# === User Functions ===
 def get_user(user_id):
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
-    row = cur.fetchone()
-    conn.close()
-    return row
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users WHERE user_id = %s", (user_id,))
+            return cur.fetchone()
 
 def set_reminder(user_id, hour):
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("INSERT INTO users (user_id, reminder_hour) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET reminder_hour = excluded.reminder_hour", (user_id, hour))
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                INSERT INTO users (user_id, reminder_hour)
+                VALUES (%s, %s)
+                ON CONFLICT (user_id) DO UPDATE SET reminder_hour = EXCLUDED.reminder_hour
+            ''', (user_id, hour))
+            conn.commit()
 
 def clear_reminder(user_id):
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("UPDATE users SET reminder_hour = NULL WHERE user_id = ?", (user_id,))
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET reminder_hour = NULL WHERE user_id = %s", (user_id,))
+            conn.commit()
 
-# === Task Functions ===
-def add_task(user_id, task):
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
+def add_task(user_id, task, description='', due_at=None):
     created_at = datetime.now().isoformat()
-
-    cur.execute(
-        "INSERT INTO tasks (user_id, task, completed, created_at) VALUES (?, ?, 0, ?)",
-        (user_id, task, created_at)
-    )
-    task_id = cur.lastrowid
-    conn.commit()
-    conn.close()
-
-    return {
-        "id": task_id,
-        "user_id": user_id,
-        "task": task,
-        "completed": 0,
-        "created_at": created_at,
-        "completed_at": None
-    }
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                INSERT INTO tasks (user_id, task, completed, created_at, description, due_at)
+                VALUES (%s, %s, FALSE, %s, %s, %s)
+                RETURNING id
+            ''', (user_id, task, created_at, description, due_at))
+            task_id = cur.fetchone()[0]
+            conn.commit()
+            return {
+                "id": task_id,
+                "user_id": user_id,
+                "task": task,
+                "description": description,
+                "due_at": due_at,
+                "completed": False,
+                "created_at": created_at,
+                "completed_at": None
+            }
 
 def get_tasks(user_id):
-    with sqlite3.connect("reliabot.db") as conn:
-        cursor = conn.execute("""
-            SELECT id, user_id, task, description, due_at, completed, created_at, completed_at
-            FROM tasks
-            WHERE user_id = ?
-            ORDER BY created_at DESC
-        """, (user_id,))
-        rows = cursor.fetchall()
-        return [
-            {
-                "id": row[0],
-                "user_id": row[1],
-                "task": row[2],
-                "description": row[3],
-                "due_at": row[4],
-                "completed": row[5],
-                "created_at": row[6],
-                "completed_at": row[7],
-            }
-            for row in rows
-        ]
-
-
-
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT id, user_id, task, description, due_at, completed, created_at, completed_at
+                FROM tasks
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+            ''', (user_id,))
+            rows = cur.fetchall()
+            return [dict(row) for row in rows]
 
 def complete_task(user_id, task):
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("UPDATE tasks SET completed = 1, completed_date = ? WHERE user_id = ? AND task = ? AND completed = 0", (datetime.now().date(), user_id, task))
-    changes = cur.rowcount
-    conn.commit()
-    conn.close()
-    return changes > 0
+    completed_date = datetime.now().date().isoformat()
+    completed_at = datetime.now().isoformat()
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                UPDATE tasks
+                SET completed = TRUE, completed_date = %s, completed_at = %s
+                WHERE user_id = %s AND task = %s AND completed = FALSE
+            ''', (completed_date, completed_at, user_id, task))
+            conn.commit()
+            return cur.rowcount > 0
 
 def get_completed_tasks(user_id):
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT task, completed_date, created_at, completed_at
-        FROM tasks
-        WHERE user_id = ? AND completed = 1
-        ORDER BY completed_date DESC
-    """, (user_id,))
-    rows = cur.fetchall()
-    conn.close()
-    return rows  # List of tuples: (task, completed_date, created_at, completed_at)
-    
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                SELECT task, completed_date, created_at, completed_at
+                FROM tasks
+                WHERE user_id = %s AND completed = TRUE
+                ORDER BY completed_date DESC
+            ''', (user_id,))
+            return cur.fetchall()
 
 def clear_completed_tasks(user_id):
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("DELETE FROM tasks WHERE user_id = ? AND completed = 1", (user_id,))
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM tasks WHERE user_id = %s AND completed = TRUE", (user_id,))
+            conn.commit()
 
-# === Streak Tracking ===
 def update_streak(user_id):
     today = str(datetime.now().date())
     user = get_user(user_id)
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    if not user:
-        cur.execute("INSERT INTO users (user_id, streak, last_check) VALUES (?, 1, ?)", (user_id, today))
-        conn.commit()
-        conn.close()
-        return 1
-    else:
-        last_check = user[2]
-        streak = user[1] or 0
-        if last_check != today:
-            if last_check:
-                last_date = datetime.strptime(last_check, "%Y-%m-%d").date()
-                if (datetime.now().date() - last_date).days == 1:
-                    streak += 1
-                else:
-                    streak = 1
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            if not user:
+                cur.execute("INSERT INTO users (user_id, streak, last_check) VALUES (%s, 1, %s)", (user_id, today))
+                conn.commit()
+                return 1
             else:
-                streak = 1
-            cur.execute("UPDATE users SET streak = ?, last_check = ? WHERE user_id = ?", (streak, today, user_id))
-            conn.commit()
-        conn.close()
-        return streak
+                last_check = user[2]
+                streak = user[1] or 0
+                if last_check != today:
+                    if last_check:
+                        last_date = datetime.strptime(last_check, "%Y-%m-%d").date()
+                        if (datetime.now().date() - last_date).days == 1:
+                            streak += 1
+                        else:
+                            streak = 1
+                    else:
+                        streak = 1
+                    cur.execute("UPDATE users SET streak = %s, last_check = %s WHERE user_id = %s", (streak, today, user_id))
+                    conn.commit()
+                return streak
 
 def get_streak(user_id):
     user = get_user(user_id)
     return user[1] if user else 0
 
 def get_reminder_users():
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("SELECT user_id, reminder_hour, last_dm FROM users WHERE reminder_hour IS NOT NULL")
-    users = cur.fetchall()
-    conn.close()
-    return users
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT user_id, reminder_hour, last_dm FROM users WHERE reminder_hour IS NOT NULL")
+            return cur.fetchall()
 
 def set_last_dm(user_id, date):
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("UPDATE users SET last_dm = ? WHERE user_id = ?", (date, user_id))
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET last_dm = %s WHERE user_id = %s", (date, user_id))
+            conn.commit()
