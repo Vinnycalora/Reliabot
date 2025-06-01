@@ -12,6 +12,9 @@ import requests
 from urllib.parse import urlencode
 from collections import defaultdict
 from db import migrate_tasks_table
+from fastapi import Depends
+from db import get_db
+
 
 load_dotenv()
 
@@ -48,22 +51,26 @@ def get_tasks(user_id: str):
     return db.get_tasks(user_id)
 
 @app.post("/task")
-async def create_task(request: Request):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+async def create_task(request: Request, db=Depends(get_db)):
+    user = request.session.get("user")
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
     data = await request.json()
     task = data.get("task")
     description = data.get("description", "")
-    due_at = data.get("due_at")
+    due_at = data.get("due_at", None)
 
-    now = datetime.utcnow().isoformat()
+    if not task:
+        raise HTTPException(status_code=400, detail="Task is required")
+
     db.execute(
-        "INSERT INTO tasks (user_id, task, description, remind_time, created_at, due_at) VALUES (?, ?, ?, ?, ?, ?)",
-        (user_id, task, description, now, now, due_at)
+        "INSERT INTO tasks (user_id, task, description, due_at) VALUES (?, ?, ?, ?)",
+        (user["id"], task, description, due_at)
     )
-    return {"message": "Task created"}
+    db.commit()
+    return {"message": "Task added"}
+
 
 
 
