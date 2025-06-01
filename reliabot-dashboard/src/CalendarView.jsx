@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import './calendar-custom.css';
 
-const CalendarView = () => {
+const CalendarView = ({ userId }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [tasks, setTasks] = useState([]);
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/tasks/test_user`)
+        if (!userId) return;
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/tasks/${userId}`)
             .then(res => res.json())
             .then(data => setTasks(data))
             .catch(err => console.error("Failed to fetch tasks:", err));
-    }, []);
+    }, [userId]);
 
     const getDaysInMonth = (date) => {
         const start = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -33,9 +34,6 @@ const CalendarView = () => {
         newDate.setMonth(newDate.getMonth() + offset);
         setCurrentDate(newDate);
     };
-
-    const formatDate = (date) =>
-        date.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
 
     const selectedTasks = tasks.filter(
         t => new Date(t.created_at).toDateString() === selectedDate.toDateString()
@@ -66,10 +64,10 @@ const CalendarView = () => {
                     return (
                         <div
                             key={idx}
-                            className={`calendar-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
+                            className={`calendar-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''} ${dayTasks.length ? 'has-tasks' : ''}`}
                             onClick={() => day && setSelectedDate(day)}
                         >
-                            {day ? (
+                            {day && (
                                 <>
                                     <div className="calendar-number">{day.getDate()}</div>
                                     {dayTasks.length > 0 && (
@@ -80,7 +78,7 @@ const CalendarView = () => {
                                         </div>
                                     )}
                                 </>
-                            ) : null}
+                            )}
                         </div>
                     );
                 })}
