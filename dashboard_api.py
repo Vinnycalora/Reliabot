@@ -48,12 +48,12 @@ def get_tasks(user_id: str):
     return db.get_tasks(user_id)
 
 @app.post("/task")
-def create_task(request: Request):
-    data = request.json()
+async def create_task(request: Request):
     user_id = request.session.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
+    data = await request.json()
     task = data.get("task")
     description = data.get("description", "")
     due_at = data.get("due_at")
@@ -64,6 +64,7 @@ def create_task(request: Request):
         (user_id, task, description, now, now, due_at)
     )
     return {"message": "Task created"}
+
 
 
 @app.post("/done")
