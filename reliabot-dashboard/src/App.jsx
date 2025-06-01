@@ -13,8 +13,7 @@ function App() {
     const [streak, setStreak] = useState(null);
     const [summary, setSummary] = useState(null);
     const [user, setUser] = useState(undefined);
-    const dueDate = e.target.elements.due_at?.value.trim();
-    const description = e.target.elements.description?.value.trim();
+    
 
 
     const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -130,6 +129,8 @@ function App() {
                                             const newTask = taskInput.value.trim();
                                             const description = descriptionInput.value.trim();
                                             const due_at = dueInput.value || null;
+                                            const dueDate = e.target.elements.due_at?.value.trim();
+                                            const description = e.target.elements.description?.value.trim();
 
                                             if (!newTask) return;
 
