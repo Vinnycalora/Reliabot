@@ -53,22 +53,28 @@ def get_tasks(user_id: str):
 async def create_task(request: Request):
     user = request.session.get("user")
     if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
+    user_id = user["id"]
     data = await request.json()
     task = data.get("task")
     description = data.get("description", "")
-    due_at = data.get("due_at", None)
+    due_at = data.get("due_at")
 
     if not task:
-        raise HTTPException(status_code=400, detail="Task is required")
+        raise HTTPException(status_code=400, detail="Task required")
 
-    db.execute(
-        "INSERT INTO tasks (user_id, task, description, due_at) VALUES (?, ?, ?, ?)",
-        (user["id"], task, description, due_at)
-    )
-    db.commit()
-    return {"message": "Task added"}
+    now = datetime.utcnow().isoformat()
+
+    with sqlite3.connect("reliabot.db") as conn:
+        conn.execute(
+            "INSERT INTO tasks (user_id, task, description, remind_time, created_at, due_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (user_id, task, description, now, now, due_at)
+        )
+        conn.commit()
+
+    return {"message": "Task created"}
+
 
 
 
