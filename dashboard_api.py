@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import requests
 from urllib.parse import urlencode
 from collections import defaultdict
+from db import migrate_tasks_table
 
 load_dotenv()
 
@@ -47,17 +48,23 @@ def get_tasks(user_id: str):
     return db.get_tasks(user_id)
 
 @app.post("/task")
-async def add_task(request: Request):
-    user = request.session.get("user")
-    if not user:
-        return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+def create_task(request: Request):
+    data = request.json()
+    user_id = request.session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
-    body = await request.json()
-    task_name = body.get("task")
-    if not task_name:
-        return JSONResponse(status_code=400, content={"detail": "Missing 'task'"})
+    task = data.get("task")
+    description = data.get("description", "")
+    due_at = data.get("due_at")
 
-    return db.add_task(user["id"], task_name)
+    now = datetime.utcnow().isoformat()
+    db.execute(
+        "INSERT INTO tasks (user_id, task, description, remind_time, created_at, due_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (user_id, task, description, now, now, due_at)
+    )
+    return {"message": "Task created"}
+
 
 @app.post("/done")
 def mark_task_done(item: DoneTask):
@@ -157,3 +164,7 @@ def get_analytics(user_id: str):
 @app.on_event("startup")
 def startup():
     db.init_db()
+
+@app.on_event("startup")
+def init():
+    migrate_tasks_table()

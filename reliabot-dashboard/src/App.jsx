@@ -6,8 +6,6 @@ import GlitchLoader from './GlitchLoader';
 import CalendarView from './CalendarView';
 import AnalyticsChart from './AnalyticsChart';
 
-
-
 function App() {
     const [currentTab, setCurrentTab] = useState('Status');
     const [statusData, setStatusData] = useState(null);
@@ -16,10 +14,8 @@ function App() {
     const [summary, setSummary] = useState(null);
     const [user, setUser] = useState(undefined);
 
-
     const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-    // Fixed: only one call to fetch /me
     useEffect(() => {
         fetch(`${BASE_URL}/me`, { credentials: 'include' })
             .then(res => res.ok ? res.json() : null)
@@ -80,12 +76,9 @@ function App() {
                         🔐 Log In with Discord
                     </button>
                 </a>
-
-
             </div>
         );
     }
-
 
     return (
         <div className="dark flex flex-col h-screen bg-black text-white">
@@ -128,14 +121,20 @@ function App() {
                                         onSubmit={(e) => {
                                             e.preventDefault();
                                             const taskInput = e.target.elements.task;
+                                            const descriptionInput = e.target.elements.description;
+                                            const dueInput = e.target.elements.due_at;
+
                                             const newTask = taskInput.value.trim();
+                                            const description = descriptionInput.value.trim();
+                                            const due_at = dueInput.value || null;
+
                                             if (!newTask) return;
 
                                             fetch(`${BASE_URL}/task`, {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
                                                 credentials: 'include',
-                                                body: JSON.stringify({ task: newTask }),
+                                                body: JSON.stringify({ task: newTask, description, due_at }),
                                             })
                                                 .then((res) => {
                                                     if (!res.ok) throw new Error('Failed to add task');
@@ -147,6 +146,8 @@ function App() {
                                                             id: Date.now(),
                                                             user_id: user.id,
                                                             task: newTask,
+                                                            description,
+                                                            due_at,
                                                             completed: 0,
                                                             created_at: new Date().toISOString(),
                                                             completed_at: null,
@@ -154,15 +155,19 @@ function App() {
                                                         ...prev,
                                                     ]);
                                                     taskInput.value = '';
+                                                    descriptionInput.value = '';
+                                                    dueInput.value = '';
                                                 })
                                                 .catch((err) => {
                                                     console.error('Failed to create task:', err);
                                                     alert('Could not add task. Check backend logs.');
                                                 });
                                         }}
-                                        className="mb-6 flex gap-3"
+                                        className="mb-6 flex flex-col md:flex-row gap-3"
                                     >
                                         <input name="task" className="flex-1 p-3 rounded-lg bg-[#1a1a1d] text-white border border-gray-600" placeholder="Type a new task..." />
+                                        <input name="description" className="flex-1 p-3 rounded-lg bg-[#1a1a1d] text-white border border-gray-600" placeholder="Optional description..." />
+                                        <input name="due_at" type="datetime-local" className="p-3 rounded-lg bg-[#1a1a1d] text-white border border-gray-600" />
                                         <button type="submit" className="px-6 py-3 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold">➕ Add Task</button>
                                     </form>
                                     {tasks.length > 0 ? (
@@ -206,7 +211,11 @@ function App() {
                                                     <div className="text-xs text-gray-500 mt-1">
                                                         Created: {new Date(task.created_at).toLocaleString()}
                                                         {task.completed_at && <> | Completed: {new Date(task.completed_at).toLocaleString()}</>}
+                                                        {task.due_at && <> | Due: {new Date(task.due_at).toLocaleString()}</>}
                                                     </div>
+                                                    {task.description && (
+                                                        <div className="text-sm text-gray-300 mt-1">📝 {task.description}</div>
+                                                    )}
                                                 </li>
                                             ))}
                                         </ul>
@@ -243,6 +252,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

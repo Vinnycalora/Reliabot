@@ -49,6 +49,22 @@ def init_db():
     conn.commit()
     conn.close()
 
+def migrate_tasks_table():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN description TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass  # Already exists
+
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN due_at TEXT")
+    except sqlite3.OperationalError:
+        pass  # Already exists
+
+    conn.commit()
+    conn.close()
+
 
 # === User Functions ===
 def get_user(user_id):
@@ -142,7 +158,7 @@ def get_completed_tasks(user_id):
     rows = cur.fetchall()
     conn.close()
     return rows  # List of tuples: (task, completed_date, created_at, completed_at)
-
+    
 
 def clear_completed_tasks(user_id):
     conn = sqlite3.connect(DB_FILE)
