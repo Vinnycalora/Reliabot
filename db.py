@@ -133,10 +133,16 @@ def complete_task(user_id, task):
 def get_completed_tasks(user_id):
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
-    cur.execute("SELECT task, completed_date FROM tasks WHERE user_id = ? AND completed = 1 ORDER BY completed_date DESC", (user_id,))
+    cur.execute("""
+        SELECT task, completed_date, created_at, completed_at
+        FROM tasks
+        WHERE user_id = ? AND completed = 1
+        ORDER BY completed_date DESC
+    """, (user_id,))
     rows = cur.fetchall()
     conn.close()
-    return rows
+    return rows  # List of tuples: (task, completed_date, created_at, completed_at)
+
 
 def clear_completed_tasks(user_id):
     conn = sqlite3.connect(DB_FILE)

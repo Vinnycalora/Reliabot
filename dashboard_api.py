@@ -123,21 +123,35 @@ async def discord_oauth(request: Request, code: str):
 
 @app.get("/analytics/{user_id}")
 def get_analytics(user_id: str):
-    completed_tasks = db.get_completed_tasks(user_id)  # [(task_name, completed_date)]
-
+    completed_tasks = db.get_completed_tasks(user_id)
+    
     daily_counts = defaultdict(int)
+    completion_times_by_day = defaultdict(list)
 
-    for task_name, date_str in completed_tasks:
+    for task, completed_date_str, created_at_str, completed_at_str in completed_tasks:
         try:
-            completed_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            if (datetime.now().date() - completed_date).days <= 7:
-                daily_counts[completed_date.strftime("%Y-%m-%d")] += 1
+            completed_date = datetime.strptime(completed_date_str, "%Y-%m-%d").date()
+            if (datetime.now().date() - completed_date).days > 7:
+                continue
+
+            daily_counts[completed_date.strftime("%Y-%m-%d")] += 1
+
+            created_at = datetime.fromisoformat(created_at_str)
+            completed_at = datetime.fromisoformat(completed_at_str)
+            completion_seconds = (completed_at - created_at).total_seconds()
+            completion_times_by_day[completed_date.strftime("%Y-%m-%d")].append(completion_seconds)
+
         except Exception as e:
-            print("Error parsing task:", e)
+            print("Error processing task:", e)
+
+    average_completion_time = {
+        day: round(sum(times) / len(times) / 60, 2)  # minutes
+        for day, times in completion_times_by_day.items()
+    }
 
     return {
         "daily_counts": dict(daily_counts),
-        "average_completion_time_seconds": 0  # placeholder for future
+        "completion_time_minutes": average_completion_time
     }
 
 @app.on_event("startup")
