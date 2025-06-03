@@ -13,6 +13,7 @@ from urllib.parse import urlencode
 from dotenv import load_dotenv
 import db
 from db import get_connection, migrate_tasks_table
+import traceback
 
 
 load_dotenv()
@@ -75,6 +76,8 @@ async def create_task(request: Request, task: TaskCreate):
                 )
             conn.commit()
     except Exception as e:
+        print("🚨 ERROR in /task route:", e)
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"message": "Task added"}
