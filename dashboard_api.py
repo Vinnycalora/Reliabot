@@ -44,11 +44,6 @@ class TaskCreate(BaseModel):
     due_at: Optional[str] = None
     description: Optional[str] = None
 
-class Task(BaseModel):
-    user_id: str
-    task: str
-    description: Optional[str] = None
-    due_date: Optional[str] = None
 
 class DoneTask(BaseModel):
     user_id: str
@@ -69,20 +64,21 @@ async def create_task(request: Request, task: TaskCreate):
     created_at = datetime.utcnow()
 
     try:
-        with get_db() as conn:
+        with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO tasks (user_id, task, created_at, due_date, description)
+                    INSERT INTO tasks (user_id, task, created_at, due_at, description)
                     VALUES (%s, %s, %s, %s, %s)
                     """,
-                    (user_id, task.task, created_at, task.due_date, task.description),
+                    (user_id, task.name, created_at, task.due_at, task.description),
                 )
             conn.commit()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"message": "Task added"}
+
 
 @app.post("/done")
 def mark_task_done(item: DoneTask):
