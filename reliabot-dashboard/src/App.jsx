@@ -131,6 +131,9 @@ function App() {
                                             const description = descriptionInput.value.trim();
                                             const due_at = dueInput.value || null;
                                             const dueDate = e.target.elements.due_at?.value.trim();
+                                            const recurrenceInput = e.target.elements.recurrence;
+                                            const recurrence = recurrenceInput?.value || null;
+
                                             
 
                                             if (!newTask) return;
@@ -149,6 +152,7 @@ function App() {
                                                     name: newTask,
                                                     due_at: due_at,
                                                     description: description || null,
+                                                    recurrence
                                                 }),
 
                                             })
@@ -184,6 +188,12 @@ function App() {
                                         <input name="task" className="flex-1 p-3 rounded-lg bg-[#1a1a1d] text-white border border-gray-600" placeholder="Type a new task..." />
                                         <input name="description" className="flex-1 p-3 rounded-lg bg-[#1a1a1d] text-white border border-gray-600" placeholder="Optional description..." />
                                         <input name="due_at" type="datetime-local" className="p-3 rounded-lg bg-[#1a1a1d] text-white border border-gray-600" />
+                                        <select name="recurrence" className="p-3 rounded-lg bg-[#1a1a1d] text-white border border-gray-600">
+                                            <option value="">No repeat</option>
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
                                         <button type="submit" className="px-6 py-3 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold">➕ Add Task</button>
                                     </form>
                                     {tasks.length > 0 ? (
@@ -231,6 +241,9 @@ function App() {
                                                     </div>
                                                     {task.description && (
                                                         <div className="text-sm text-gray-300 mt-1">📝 {task.description}</div>
+                                                    )}
+                                                    {task.recurrence && (
+                                                        <div className="text-xs text-sky-300 mt-1">🔁 {task.recurrence}</div>
                                                     )}
                                                 </li>
                                             ))}

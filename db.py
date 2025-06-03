@@ -59,15 +59,15 @@ def clear_reminder(user_id):
             cur.execute("UPDATE users SET reminder_hour = NULL WHERE user_id = %s", (user_id,))
             conn.commit()
 
-def add_task(user_id, task, description='', due_at=None):
+def add_task(user_id, task, description='', due_at=None, recurrence=None):
     created_at = datetime.now().isoformat()
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute('''
-                INSERT INTO tasks (user_id, task, completed, created_at, description, due_at)
-                VALUES (%s, %s, FALSE, %s, %s, %s)
+                INSERT INTO tasks (user_id, task, completed, created_at, description, due_at, recurrence)
+                VALUES (%s, %s, FALSE, %s, %s, %s, %s)
                 RETURNING id
-            ''', (user_id, task, created_at, description, due_at))
+            ''', (user_id, task, created_at, description, due_at, recurrence))
             task_id = cur.fetchone()[0]
             conn.commit()
             return {
@@ -76,6 +76,7 @@ def add_task(user_id, task, description='', due_at=None):
                 "task": task,
                 "description": description,
                 "due_at": due_at,
+                "recurrence": recurrence,
                 "completed": False,
                 "created_at": created_at,
                 "completed_at": None
@@ -85,7 +86,7 @@ def get_tasks(user_id):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute('''
-                SELECT id, user_id, task, description, due_at, completed, created_at, completed_at
+                SELECT id, user_id, task, description, due_at, recurrence, completed, created_at, completed_at
                 FROM tasks
                 WHERE user_id = %s
                 ORDER BY created_at DESC
