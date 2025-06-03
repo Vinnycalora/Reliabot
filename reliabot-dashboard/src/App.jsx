@@ -130,7 +130,7 @@ function App() {
                                             const description = descriptionInput.value.trim();
                                             const due_at = dueInput.value || null;
                                             const dueDate = e.target.elements.due_at?.value.trim();
-                                            const description = e.target.elements.description?.value.trim();
+                                            
 
                                             if (!newTask) return;
 
