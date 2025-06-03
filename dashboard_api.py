@@ -1,39 +1,33 @@
 ﻿from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel
-import db
-import time
-from datetime import datetime, date
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
-import os
-from dotenv import load_dotenv
-import requests
-from urllib.parse import urlencode
-from collections import defaultdict
-from db import migrate_tasks_table
-from fastapi import Depends
-import sqlite3
 from pydantic import BaseModel
 from typing import Optional
-
-
-
+from collections import defaultdict
+from datetime import datetime
+import os
+import time
+import requests
+from urllib.parse import urlencode
+from dotenv import load_dotenv
+import db
+from db import get_db, migrate_tasks_table
 
 load_dotenv()
 
-START_TIME = time.time()
 app = FastAPI()
+START_TIME = time.time()
 
+# CORS & Session
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv("SESSION_SECRET", "supersecretkey123"),
     same_site="none",
     https_only=True,
-    max_age=86400,  # optional: session cookie lasts 1 day
-    session_cookie="session"  # explicitly name the cookie
+    max_age=86400,
+    session_cookie="session"
 )
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,19 +37,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# === Models ===
 class TaskCreate(BaseModel):
-    name: str
-    due_at: Optional[str] = None
+    task: str
     description: Optional[str] = None
+    due_date: Optional[str] = None
 
 class Task(BaseModel):
+    user_id: str
     task: str
+    description: Optional[str] = None
+    due_date: Optional[str] = None
 
 class DoneTask(BaseModel):
     user_id: str
     task: str
 
+# === Routes ===
 @app.get("/tasks/{user_id}")
 def get_tasks(user_id: str):
     return db.get_tasks(user_id)
@@ -74,21 +72,16 @@ async def create_task(request: Request, task: TaskCreate):
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO tasks (user_id, name, created_at, due_at, description)
+                    INSERT INTO tasks (user_id, task, created_at, due_date, description)
                     VALUES (%s, %s, %s, %s, %s)
                     """,
-                    (user_id, task.name, created_at, task.due_at, task.description),
+                    (user_id, task.task, created_at, task.due_date, task.description),
                 )
             conn.commit()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"message": "Task added"}
-
-
-
-
-
 
 @app.post("/done")
 def mark_task_done(item: DoneTask):
@@ -108,6 +101,38 @@ def get_summary(user_id: str):
         "completed_this_week": len(this_week),
         "total_completed": len(completed),
         "streak": db.get_streak(user_id)
+    }
+
+@app.get("/analytics/{user_id}")
+def get_analytics(user_id: str):
+    completed_tasks = db.get_completed_tasks(user_id)
+
+    daily_counts = defaultdict(int)
+    completion_times_by_day = defaultdict(list)
+
+    for task, completed_date_str, created_at_str, completed_at_str in completed_tasks:
+        try:
+            completed_date = datetime.strptime(completed_date_str, "%Y-%m-%d").date()
+            if (datetime.now().date() - completed_date).days > 7:
+                continue
+
+            daily_counts[completed_date.strftime("%Y-%m-%d")] += 1
+
+            created_at = datetime.fromisoformat(created_at_str)
+            completed_at = datetime.fromisoformat(completed_at_str)
+            completion_seconds = (completed_at - created_at).total_seconds()
+            completion_times_by_day[completed_date.strftime("%Y-%m-%d")].append(completion_seconds)
+        except Exception as e:
+            print("Error processing task:", e)
+
+    average_completion_time = {
+        day: round(sum(times) / len(times) / 60, 2)
+        for day, times in completion_times_by_day.items()
+    }
+
+    return {
+        "daily_counts": dict(daily_counts),
+        "completion_time_minutes": average_completion_time
     }
 
 @app.get("/status")
@@ -152,69 +177,11 @@ async def discord_oauth(request: Request, code: str):
 
     return RedirectResponse(url="https://reliabot.netlify.app")
 
-@app.get("/analytics/{user_id}")
-def get_analytics(user_id: str):
-    completed_tasks = db.get_completed_tasks(user_id)
-    
-    daily_counts = defaultdict(int)
-    completion_times_by_day = defaultdict(list)
-
-    for task, completed_date_str, created_at_str, completed_at_str in completed_tasks:
-        try:
-            completed_date = datetime.strptime(completed_date_str, "%Y-%m-%d").date()
-            if (datetime.now().date() - completed_date).days > 7:
-                continue
-
-            daily_counts[completed_date.strftime("%Y-%m-%d")] += 1
-
-            created_at = datetime.fromisoformat(created_at_str)
-            completed_at = datetime.fromisoformat(completed_at_str)
-            completion_seconds = (completed_at - created_at).total_seconds()
-            completion_times_by_day[completed_date.strftime("%Y-%m-%d")].append(completion_seconds)
-
-        except Exception as e:
-            print("Error processing task:", e)
-
-    average_completion_time = {
-        day: round(sum(times) / len(times) / 60, 2)  # minutes
-        for day, times in completion_times_by_day.items()
-    }
-
-    return {
-        "daily_counts": dict(daily_counts),
-        "completion_time_minutes": average_completion_time
-    }
-
+# === Startup ===
 @app.on_event("startup")
 def startup():
     db.init_db()
 
 @app.on_event("startup")
-def init():
+def startup_migrate():
     migrate_tasks_table()
-
-@app.get("/init-db")
-def init_database():
-    import psycopg2
-    from os import getenv
-
-    sql = """
-    CREATE TABLE IF NOT EXISTS tasks (
-        id SERIAL PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        task TEXT NOT NULL,
-        done INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        completed_at TIMESTAMP,
-        description TEXT,
-        due_date TIMESTAMP
-    );
-    """
-
-    conn = psycopg2.connect(getenv("DATABASE_URL"))
-    cur = conn.cursor()
-    cur.execute(sql)
-    conn.commit()
-    cur.close()
-    conn.close()
-    return {"status": "ok", "message": "Table created."}
