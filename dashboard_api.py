@@ -67,6 +67,17 @@ async def create_task(request: Request, task: TaskCreate):
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
+                # Ensure user exists in the users table
+                cur.execute(
+                    """
+                    INSERT INTO users (user_id, streak, last_check)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (user_id) DO NOTHING
+                    """,
+                    (user_id, 0, None)
+                )
+
+                # Now insert the task
                 cur.execute(
                     """
                     INSERT INTO tasks (user_id, task, created_at, due_at, description)
@@ -81,6 +92,7 @@ async def create_task(request: Request, task: TaskCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"message": "Task added"}
+
 
 
 @app.post("/done")
