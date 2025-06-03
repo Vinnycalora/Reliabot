@@ -40,9 +40,9 @@ app.add_middleware(
 
 # === Models ===
 class TaskCreate(BaseModel):
-    task: str
+    name: str
+    due_at: Optional[str] = None
     description: Optional[str] = None
-    due_date: Optional[str] = None
 
 class Task(BaseModel):
     user_id: str

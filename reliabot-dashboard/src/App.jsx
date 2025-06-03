@@ -18,6 +18,7 @@ function App() {
 
     const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+
     useEffect(() => {
         fetch(`${BASE_URL}/me`, { credentials: 'include' })
             .then(res => res.ok ? res.json() : null)
@@ -133,6 +134,12 @@ function App() {
                                             
 
                                             if (!newTask) return;
+
+                                            console.log("Submitting:", {
+                                                name: newTask,
+                                                due_at: due_at,
+                                                description: description || null,
+                                            });
 
                                             fetch(`${BASE_URL}/task`, {
                                                 method: 'POST',
