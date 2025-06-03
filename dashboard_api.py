@@ -12,7 +12,8 @@ import requests
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 import db
-from db import get_db, migrate_tasks_table
+from db import get_connection, migrate_tasks_table
+
 
 load_dotenv()
 
