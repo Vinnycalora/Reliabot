@@ -135,6 +135,9 @@ function App() {
                                             const recurrence = recurrenceInput?.value || null;
                                             const labelsInput = e.target.elements.labels;
                                             const labels = labelsInput.value.trim();
+                                            const priorityInput = e.target.elements.priority;
+                                            const priority = priorityInput?.value || null;
+
 
                                             
 
@@ -155,6 +158,7 @@ function App() {
                                                     due_at: due_at,
                                                     description: description || null,
                                                     labels: labels || null,
+                                                    priority,
                                                     recurrence
                                                 }),
 
@@ -202,6 +206,12 @@ function App() {
                                             className="flex-1 p-3 rounded-lg bg-[#1a1a1d] text-white border border-gray-600"
                                             placeholder="Add labels (e.g., work,focus)"
                                         />
+                                        <select name="priority" className="p-3 rounded-lg bg-[#1a1a1d] text-white border border-gray-600">
+                                            <option value="">Priority</option>
+                                            <option value="low">Low</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="high">High</option>
+                                        </select>
 
                                         <button type="submit" className="px-6 py-3 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold">➕ Add Task</button>
                                     </form>
@@ -264,6 +274,18 @@ function App() {
                                                                     #{label.trim()}
                                                                 </span>
                                                             ))}
+                                                        </div>
+                                                    )}
+                                                    {task.priority && (
+                                                        <div className="text-xs mt-1">
+                                                            <span
+                                                                className={`px-2 py-1 rounded-full font-bold ${task.priority === 'high' ? 'bg-red-600' :
+                                                                        task.priority === 'medium' ? 'bg-yellow-500 text-black' :
+                                                                            'bg-green-600'
+                                                                    }`}
+                                                            >
+                                                                ⭐ {task.priority.toUpperCase()}
+                                                            </span>
                                                         </div>
                                                     )}
                                                 </li>

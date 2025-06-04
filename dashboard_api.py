@@ -46,6 +46,7 @@ class TaskCreate(BaseModel):
     description: Optional[str] = None
     recurrence: Optional[str] = None
     labels: Optional[str] = None
+    priority: Optional[str] = None
 
 
 
