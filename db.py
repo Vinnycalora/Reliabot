@@ -86,7 +86,7 @@ def get_tasks(user_id):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute('''
-                SELECT id, user_id, task, description, due_at, recurrence, completed, created_at, completed_at
+                SELECT id, user_id, task, description, due_at, recurrence, labels, completed, created_at, completed_at
                 FROM tasks
                 WHERE user_id = %s
                 ORDER BY created_at DESC
