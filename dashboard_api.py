@@ -44,6 +44,7 @@ class TaskCreate(BaseModel):
     name: str
     due_at: Optional[str] = None
     description: Optional[str] = None
+    recurrence: Optional[str] = None
 
 
 class DoneTask(BaseModel):
@@ -80,10 +81,10 @@ async def create_task(request: Request, task: TaskCreate):
                 # Now insert the task
                 cur.execute(
                     """
-                    INSERT INTO tasks (user_id, task, created_at, due_at, description)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO tasks (user_id, task, created_at, due_at, description, recurrence)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                     """,
-                    (user_id, task.name, created_at, task.due_at, task.description),
+                    (user_id, task.name, created_at, task.due_at, task.description, task.recurrence),
                 )
             conn.commit()
     except Exception as e:

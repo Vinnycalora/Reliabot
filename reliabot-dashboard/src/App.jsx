@@ -243,7 +243,7 @@ function App() {
                                                         <div className="text-sm text-gray-300 mt-1">📝 {task.description}</div>
                                                     )}
                                                     {task.recurrence && (
-                                                        <div className="text-xs text-sky-300 mt-1">🔁 {task.recurrence}</div>
+                                                        <div className="text-sm text-indigo-400 mt-1">🔁 Repeats: {task.recurrence}</div>
                                                     )}
                                                 </li>
                                             ))}
