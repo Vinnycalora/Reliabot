@@ -133,6 +133,8 @@ function App() {
                                             const dueDate = e.target.elements.due_at?.value.trim();
                                             const recurrenceInput = e.target.elements.recurrence;
                                             const recurrence = recurrenceInput?.value || null;
+                                            const labelsInput = e.target.elements.labels;
+                                            const labels = labelsInput.value.trim();
 
                                             
 
@@ -152,6 +154,7 @@ function App() {
                                                     name: newTask,
                                                     due_at: due_at,
                                                     description: description || null,
+                                                    labels: labels || null,
                                                     recurrence
                                                 }),
 
@@ -194,6 +197,12 @@ function App() {
                                             <option value="weekly">Weekly</option>
                                             <option value="monthly">Monthly</option>
                                         </select>
+                                        <input
+                                            name="labels"
+                                            className="flex-1 p-3 rounded-lg bg-[#1a1a1d] text-white border border-gray-600"
+                                            placeholder="Add labels (e.g., work,focus)"
+                                        />
+
                                         <button type="submit" className="px-6 py-3 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold">➕ Add Task</button>
                                     </form>
                                     {tasks.length > 0 ? (
@@ -244,6 +253,18 @@ function App() {
                                                     )}
                                                     {task.recurrence && (
                                                         <div className="text-sm text-indigo-400 mt-1">🔁 Repeats: {task.recurrence}</div>
+                                                    )}
+                                                    {task.labels && (
+                                                        <div className="mt-1 flex flex-wrap gap-2">
+                                                            {task.labels.split(',').map((label, i) => (
+                                                                <span
+                                                                    key={i}
+                                                                    className="bg-indigo-700 text-white text-xs px-2 py-1 rounded-full"
+                                                                >
+                                                                    #{label.trim()}
+                                                                </span>
+                                                            ))}
+                                                        </div>
                                                     )}
                                                 </li>
                                             ))}
