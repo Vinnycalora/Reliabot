@@ -56,7 +56,7 @@ class DoneTask(BaseModel):
 @app.get("/tasks/{user_id}")
 def get_tasks(user_id: str, request: Request):
     user = request.session.get("user")
-    if not user or str(user["id"]) != user_id:
+    if not user or str(user.get("id")) != str(user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
     return db.get_tasks(user_id)
 
@@ -99,7 +99,7 @@ async def create_task(request: Request, task: TaskCreate):
 @app.post("/done")
 def mark_task_done(item: DoneTask, request: Request):
     user = request.session.get("user")
-    if not user or str(user["id"]) != item.user_id:
+    if not user or str(user.get("id")) != str(item.user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
     success = db.complete_task(item.user_id, item.task)
@@ -112,14 +112,14 @@ def mark_task_done(item: DoneTask, request: Request):
 @app.get("/streak/{user_id}")
 def get_streak(user_id: str, request: Request):
     user = request.session.get("user")
-    if not user or str(user["id"]) != user_id:
+    if not user or str(user.get("id")) != str(user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
     return {"streak": db.get_streak(user_id)}
 
 @app.get("/summary/{user_id}")
 def get_summary(user_id: str, request: Request):
     user = request.session.get("user")
-    if not user or str(user["id"]) != user_id:
+    if not user or str(user.get("id")) != str(user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
     completed = db.get_completed_tasks(user_id)
@@ -133,7 +133,7 @@ def get_summary(user_id: str, request: Request):
 @app.get("/xp/{user_id}")
 def get_xp(user_id: str, request: Request):
     user = request.session.get("user")
-    if not user or str(user["id"]) != user_id:
+    if not user or str(user.get("id")) != str(user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
     completed = db.get_completed_tasks(user_id)
@@ -149,7 +149,7 @@ def get_xp(user_id: str, request: Request):
 @app.get("/analytics/{user_id}")
 def get_analytics(user_id: str, request: Request):
     user = request.session.get("user")
-    if not user or str(user["id"]) != user_id:
+    if not user or str(user.get("id")) != str(user_id):
         raise HTTPException(status_code=403, detail="Forbidden")
 
     completed_tasks = db.get_completed_tasks(user_id)
