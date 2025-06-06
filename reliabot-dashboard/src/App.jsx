@@ -37,26 +37,26 @@ function App() {
     }, []);
 
     useEffect(() => {
-        if (!user || !user.id) return;
+        if (!user) return;
 
         const fetchData = async () => {
             try {
                 if (currentTab === 'Status') {
                     const [statusRes, streakRes] = await Promise.all([
                         fetch(`${BASE_URL}/status`).then((res) => res.json()),
-                        fetch(`${BASE_URL}/streak/${user.id}`, { credentials: 'include' }).then((res) => res.json())
+                        fetch(`${BASE_URL}/streak/${user.id}`).then((res) => res.json())
                     ]);
                     setStatusData(statusRes);
                     setStreak(streakRes.streak);
                 }
 
                 if (currentTab === 'Tasks') {
-                    const taskRes = await fetch(`${BASE_URL}/tasks/${user.id}`, { credentials: 'include' }).then((res) => res.json());
+                    const taskRes = await fetch(`${BASE_URL}/tasks/${user.id}`).then((res) => res.json());
                     setTasks(taskRes);
                 }
 
                 if (currentTab === 'Logs') {
-                    const summaryRes = await fetch(`${BASE_URL}/summary/${user.id}`, { credentials: 'include' }).then((res) => res.json());
+                    const summaryRes = await fetch(`${BASE_URL}/summary/${user.id}`).then((res) => res.json());
                     setStreak(summaryRes.streak);
                     setSummary({
                         completedThisWeek: summaryRes.completed_this_week,
@@ -301,6 +301,7 @@ function App() {
                                                                         <button
                                                                             onClick={() => {
                                                                                 fetch(`${BASE_URL}/done`, {
+                                                                                    credentials: 'include',
                                                                                     method: 'POST',
                                                                                     headers: { 'Content-Type': 'application/json' },
                                                                                     body: JSON.stringify({ user_id: user.id, task: task.task }),
@@ -319,7 +320,7 @@ function App() {
                                                                                         );
 
                                                                                         // 💡 Fetch and update streak right after
-                                                                                        fetch(`${BASE_URL}/streak/${user.id}`, { credentials: 'include' })
+                                                                                        fetch(`${BASE_URL}/streak/${user.id}`)
                                                                                             .then(res => res.json())
                                                                                             .then(data => setStreak(data.streak))
                                                                                             .catch(err => console.error('Failed to refresh streak:', err));
@@ -429,6 +430,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
