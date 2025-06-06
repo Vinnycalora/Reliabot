@@ -1,5 +1,14 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+    CartesianGrid,
+    Legend
+} from 'recharts';
 
 const AnalyticsChart = ({ userId }) => {
     const [data, setData] = useState([]);
@@ -7,12 +16,17 @@ const AnalyticsChart = ({ userId }) => {
     useEffect(() => {
         if (!userId) return;
 
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/analytics/${userId}`)
-            .then(res => res.json())
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/analytics/${userId}`, {
+            credentials: 'include',
+        })
+            .then(res => {
+                if (!res.ok) throw new Error(`Failed with status ${res.status}`);
+                return res.json();
+            })
             .then(result => {
                 const combined = {};
 
-                for (const [date, count] of Object.entries(result.daily_counts)) {
+                for (const [date, count] of Object.entries(result.daily_counts || {})) {
                     const key = date.slice(5); // MM-DD
                     combined[key] = { date: key, tasks: count, time: 0 };
                 }
@@ -66,3 +80,4 @@ const AnalyticsChart = ({ userId }) => {
 };
 
 export default AnalyticsChart;
+

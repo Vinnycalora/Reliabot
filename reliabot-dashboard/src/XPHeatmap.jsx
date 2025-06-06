@@ -1,49 +1,44 @@
 ﻿import React, { useEffect, useState } from 'react';
 
 function XPHeatmap({ user }) {
-    const [heatmapData, setHeatmapData] = useState([]);
+    const [data, setData] = useState([]);
 
     useEffect(() => {
         if (!user) return;
+
         const fetchHeatmap = async () => {
             try {
                 const res = await fetch(`${import.meta.env.VITE_API_URL}/analytics/${user.id}`, {
                     credentials: 'include',
                 });
-                if (!res.ok) {
-                    console.warn('Analytics fetch returned non-OK status:', res.status);
-                    return;
-                }
-                const data = await res.json();
-                if (!data || typeof data !== 'object') {
-                    console.warn('Received invalid heatmap data:', data);
-                    return;
-                }
-                const parsed = Object.entries(data).map(([date, xp]) => ({
-                    date,
-                    count: xp,
-                }));
-                setHeatmapData(parsed);
+                if (!res.ok) throw new Error('Heatmap fetch failed');
+                const result = await res.json();
+                const counts = result?.daily_counts || {};
+                const parsed = Object.entries(counts).map(([date, count]) => ({ date, count }));
+                setData(parsed);
             } catch (err) {
-                console.error('Failed to fetch heatmap data:', err);
+                console.error('Failed to load XP heatmap data:', err);
+                setData([]);
             }
         };
+
         fetchHeatmap();
     }, [user]);
 
     return (
-        <div className="p-4">
-            <h2 className="text-white text-xl font-bold mb-4">XP Heatmap</h2>
-            {heatmapData.length === 0 ? (
+        <div className="p-4 text-white">
+            <h2 className="text-xl font-bold mb-4">🔥 XP Heatmap</h2>
+            {data.length === 0 ? (
                 <p className="text-gray-400">No data available yet.</p>
             ) : (
-                <pre className="text-white">{JSON.stringify(heatmapData, null, 2)}</pre>
+                <pre>{JSON.stringify(data, null, 2)}</pre>
             )}
         </div>
     );
 }
 
 export default XPHeatmap;
+
 
 
 
