@@ -234,62 +234,64 @@ function App() {
                                                 .filter((task) => showCompleted || !task.completed)
                                                 .map((task) => (
                                                 <li key={task.id || task.task} className="p-4 bg-[#121214] border border-gray-700 rounded-xl">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className={task.completed ? 'line-through text-gray-500' : 'text-white'}>{task.task}</span>
-                                                        {!task.completed && (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        fetch(`${BASE_URL}/done`, {
-                                                                            method: 'POST',
-                                                                            headers: { 'Content-Type': 'application/json' },
-                                                                            body: JSON.stringify({ user_id: user.id, task: task.task }),
-                                                                        })
-                                                                            .then((res) => {
-                                                                                if (!res.ok) throw new Error('Failed to mark task as done');
-                                                                                return res.json();
+                                                        <div className="flex justify-between items-start">
+                                                            <span className={task.completed ? 'line-through text-gray-500' : 'text-white'}>
+                                                                {task.task}
+                                                            </span>
+                                                            {!task.completed && (
+                                                                <div className="flex flex-col items-end gap-1">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            fetch(`${BASE_URL}/done`, {
+                                                                                method: 'POST',
+                                                                                headers: { 'Content-Type': 'application/json' },
+                                                                                body: JSON.stringify({ user_id: user.id, task: task.task }),
                                                                             })
-                                                                            .then(() => {
-                                                                                setTasks((prev) =>
-                                                                                    prev.map((t) =>
-                                                                                        t.task === task.task
-                                                                                            ? { ...t, completed: 1, completed_at: new Date().toISOString() }
-                                                                                            : t
-                                                                                    )
-                                                                                );
-                                                                            })
-                                                                            .catch((err) => {
-                                                                                console.error('Mark done failed:', err);
-                                                                                alert('Could not mark as done.');
-                                                                            });
-                                                                    }}
-                                                                    className="text-sm text-sky-400 hover:text-sky-300"
-                                                                >
-                                                                    Mark Done
-                                                                </button>
+                                                                                .then((res) => {
+                                                                                    if (!res.ok) throw new Error('Failed to mark task as done');
+                                                                                    return res.json();
+                                                                                })
+                                                                                .then(() => {
+                                                                                    setTasks((prev) =>
+                                                                                        prev.map((t) =>
+                                                                                            t.task === task.task
+                                                                                                ? { ...t, completed: 1, completed_at: new Date().toISOString() }
+                                                                                                : t
+                                                                                        )
+                                                                                    );
+                                                                                })
+                                                                                .catch((err) => {
+                                                                                    console.error('Mark done failed:', err);
+                                                                                    alert('Could not mark as done.');
+                                                                                });
+                                                                        }}
+                                                                        className="text-sm text-sky-400 hover:text-sky-300"
+                                                                    >
+                                                                        Mark Done
+                                                                    </button>
 
-                                                                <button
-                                                                    onClick={() => {
-                                                                        fetch(`${BASE_URL}/task/${task.id}`, {
-                                                                            method: 'DELETE',
-                                                                            credentials: 'include',
-                                                                        })
-                                                                            .then((res) => {
-                                                                                if (!res.ok) throw new Error('Failed to delete task');
-                                                                                setTasks((prev) => prev.filter((t) => t.id !== task.id));
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            fetch(`${BASE_URL}/task/${task.id}`, {
+                                                                                method: 'DELETE',
+                                                                                credentials: 'include',
                                                                             })
-                                                                            .catch((err) => {
-                                                                                console.error('Delete failed:', err);
-                                                                                alert('Could not delete task.');
-                                                                            });
-                                                                    }}
-                                                                    className="text-sm text-red-400 hover:text-red-300 ml-3"
-                                                                >
-                                                                    🗑 Delete
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                    </div>
+                                                                                .then((res) => {
+                                                                                    if (!res.ok) throw new Error('Failed to delete task');
+                                                                                    setTasks((prev) => prev.filter((t) => t.id !== task.id));
+                                                                                })
+                                                                                .catch((err) => {
+                                                                                    console.error('Delete failed:', err);
+                                                                                    alert('Could not delete task.');
+                                                                                });
+                                                                        }}
+                                                                        className="text-sm text-red-400 hover:text-red-300"
+                                                                    >
+                                                                        🗑 Delete
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     <div className="text-xs text-gray-500 mt-1">
                                                         Created: {new Date(task.created_at).toLocaleString()}
                                                         {task.completed_at && <> | Completed: {new Date(task.completed_at).toLocaleString()}</>}
