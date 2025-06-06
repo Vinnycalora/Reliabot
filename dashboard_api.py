@@ -134,21 +134,25 @@ def get_summary(user_id: str, request: Request):
     }
 
 @app.get("/xp/{user_id}")
-def get_xp(user_id: str, request: Request):
-    user = request.session.get("user")
-    if not user or str(user.get("id")) != str(user_id):
-        print(f"❌ Forbidden: session user {user.get('id') if user else 'None'} tried to access {user_id}")
-        raise HTTPException(status_code=403, detail="Forbidden")
+def get_user_xp(user_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    completed = db.get_completed_tasks(user_id)
-    xp = len(completed) * 10
-    level = xp // 100
-    progress = xp % 100
+    cursor.execute(
+        "SELECT SUM(xp) FROM tasks WHERE user_id = ? AND completed = 1",
+        (user_id,)
+    )
+    result = cursor.fetchone()
+    total_xp = result[0] or 0
+    level = total_xp // 100
+    progress = total_xp % 100
+
     return {
-        "xp": xp,
+        "xp": total_xp,
         "level": level,
         "progress": progress
     }
+
 @app.get("/xp_heatmap/{user_id}")
 def get_xp_heatmap(user_id: str, request: Request):
     user = request.session.get("user")

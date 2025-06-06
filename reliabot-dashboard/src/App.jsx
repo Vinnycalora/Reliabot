@@ -111,7 +111,6 @@ function App() {
                                         <div className="bg-[#1a1a1d] p-4 rounded-xl shadow-lg border border-gray-700">⏱️ {Math.floor(statusData.uptime)} sec</div>
                                         <div className="bg-[#1a1a1d] p-4 rounded-xl shadow-lg border border-gray-700">{statusData.timestamp}</div>
                                         <div className="bg-[#1a1a1d] p-4 rounded-xl shadow-lg border border-gray-700">🔥 {streak} day(s)</div>
-                                        <XPBar userId={user.id} />
                                     </div>
                                 ) : (
                                     <GlitchLoader />
@@ -418,6 +417,7 @@ function App() {
                                         <div className="bg-[#0e0e10] p-5 rounded-2xl border border-gray-700 shadow-xl">📈 {summary?.totalCompleted || 0} total</div>
                                     </div>
 
+                                    <XPBar userId={user.id} />
                                     <AnalyticsChart userId={user.id} />
                                     <XPHeatmap userId={user.id} />
 
