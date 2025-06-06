@@ -134,23 +134,21 @@ def get_summary(user_id: str, request: Request):
     }
 
 @app.get("/xp/{user_id}")
-def get_user_xp(user_id: int):
-    conn = get_connection()
-    cursor = conn.cursor()
+def get_user_xp(user_id: str, request: Request):
+    """Return basic XP stats based on completed tasks."""
+    user = request.session.get("user")
+    if not user or str(user.get("id")) != str(user_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
 
-    cursor.execute(
-        "SELECT SUM(xp) FROM tasks WHERE user_id = ? AND completed = 1",
-        (user_id,)
-    )
-    result = cursor.fetchone()
-    total_xp = result[0] or 0
+    completed = db.get_completed_tasks(user_id)
+    total_xp = len(completed)
     level = total_xp // 100
     progress = total_xp % 100
 
     return {
         "xp": total_xp,
         "level": level,
-        "progress": progress
+        "progress": progress,
     }
 
 @app.get("/xp_heatmap/{user_id}")
