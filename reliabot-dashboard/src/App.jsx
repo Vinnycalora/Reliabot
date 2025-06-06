@@ -32,12 +32,12 @@ function App() {
     useEffect(() => {
         fetch(`${BASE_URL}/me`, { credentials: 'include' })
             .then(res => res.ok ? res.json() : null)
-            .then(data => setUser(data)); console.log('👤 User loaded:', data)
-                .catch(() => setUser(null));
+            .then(data => setUser(data))
+            .catch(() => setUser(null));
     }, []);
 
     useEffect(() => {
-        if (!user || !user.id) { console.log('⏳ Waiting for user ID...'); return; }
+        if (!user || !user.id) return;
 
         const fetchData = async () => {
             try {
