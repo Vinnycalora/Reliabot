@@ -18,7 +18,7 @@ function App() {
     const [showCompleted, setShowCompleted] = useState(false);
     const [filter, setFilter] = useState({
         label: '',
-        priority: '',
+        priority: '', //testing git
         status: 'all', // all, active, completed
         search: '',
     });
