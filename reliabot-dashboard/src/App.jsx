@@ -417,8 +417,9 @@ function App() {
                                         <div className="bg-[#0e0e10] p-5 rounded-2xl border border-gray-700 shadow-xl">📈 {summary?.totalCompleted || 0} total</div>
                                     </div>
 
-                                    <XPBar userId={user.id} />
+                                    
                                     <AnalyticsChart userId={user.id} />
+                                    <XPBar userId={user.id} />
                                     <XPHeatmap userId={user.id} />
 
                                     {!summary && <GlitchLoader />}
