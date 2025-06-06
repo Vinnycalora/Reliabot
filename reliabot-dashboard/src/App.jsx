@@ -6,6 +6,8 @@ import GlitchLoader from './GlitchLoader';
 import CalendarView from './CalendarView';
 import AnalyticsChart from './AnalyticsChart';
 import XPHeatmap from './XPHeatmap';
+import XPBar from './XPBar';
+
 
 function App() {
     const [currentTab, setCurrentTab] = useState('Status');
@@ -109,6 +111,7 @@ function App() {
                                         <div className="bg-[#1a1a1d] p-4 rounded-xl shadow-lg border border-gray-700">⏱️ {Math.floor(statusData.uptime)} sec</div>
                                         <div className="bg-[#1a1a1d] p-4 rounded-xl shadow-lg border border-gray-700">{statusData.timestamp}</div>
                                         <div className="bg-[#1a1a1d] p-4 rounded-xl shadow-lg border border-gray-700">🔥 {streak} day(s)</div>
+                                        <XPBar userId={user.id} />
                                     </div>
                                 ) : (
                                     <GlitchLoader />
