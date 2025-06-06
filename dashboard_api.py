@@ -149,6 +149,24 @@ def get_xp(user_id: str, request: Request):
         "level": level,
         "progress": progress
     }
+@app.get("/xp_heatmap/{user_id}")
+def get_xp_heatmap(user_id: str, request: Request):
+    user = request.session.get("user")
+    if not user or str(user.get("id")) != str(user_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    completed_tasks = db.get_completed_tasks(user_id)
+    heatmap_data = defaultdict(int)
+
+    for _, completed_date_str, _, _ in completed_tasks:
+        try:
+            day = datetime.strptime(completed_date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
+            heatmap_data[day] += 1
+        except:
+            continue
+
+    return dict(heatmap_data)
+
 
 @app.get("/analytics/{user_id}")
 def get_analytics(user_id: str, request: Request):
