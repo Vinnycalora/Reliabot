@@ -316,6 +316,12 @@ function App() {
                                                                                                     : t
                                                                                             )
                                                                                         );
+
+                                                                                        // 💡 Fetch and update streak right after
+                                                                                        fetch(`${BASE_URL}/streak/${user.id}`)
+                                                                                            .then(res => res.json())
+                                                                                            .then(data => setStreak(data.streak))
+                                                                                            .catch(err => console.error('Failed to refresh streak:', err));
                                                                                     })
                                                                                     .catch((err) => {
                                                                                         console.error('Mark done failed:', err);

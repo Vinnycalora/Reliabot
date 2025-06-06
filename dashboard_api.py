@@ -102,9 +102,15 @@ async def create_task(request: Request, task: TaskCreate):
 
 @app.post("/done")
 def mark_task_done(item: DoneTask):
-    if db.complete_task(item.user_id, item.task):
-        return {"message": "Task marked as done."}
-    raise HTTPException(status_code=404, detail="Task not found.")
+    success = db.complete_task(item.user_id, item.task)
+    if not success:
+        raise HTTPException(status_code=404, detail="Task not found.")
+    
+    # 🔥 Update streak here
+    db.update_streak(item.user_id)
+    
+    return {"message": "Task marked as done."}
+
 
 @app.get("/streak/{user_id}")
 def get_streak(user_id: str):
