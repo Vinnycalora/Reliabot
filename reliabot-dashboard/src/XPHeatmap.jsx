@@ -56,3 +56,4 @@ function XPHeatmap({ userId }) {
 
 export default XPHeatmap;
 
+
