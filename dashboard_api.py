@@ -57,6 +57,7 @@ class DoneTask(BaseModel):
 def get_tasks(user_id: str, request: Request):
     user = request.session.get("user")
     if not user or str(user.get("id")) != str(user_id):
+        print(f"❌ Forbidden: session user {user.get('id')} tried to access {user_id}")
         raise HTTPException(status_code=403, detail="Forbidden")
     return db.get_tasks(user_id)
 
@@ -113,6 +114,7 @@ def mark_task_done(item: DoneTask, request: Request):
 def get_streak(user_id: str, request: Request):
     user = request.session.get("user")
     if not user or str(user.get("id")) != str(user_id):
+        print(f"❌ Forbidden: session user {user.get('id')} tried to access {user_id}")
         raise HTTPException(status_code=403, detail="Forbidden")
     return {"streak": db.get_streak(user_id)}
 
@@ -120,6 +122,7 @@ def get_streak(user_id: str, request: Request):
 def get_summary(user_id: str, request: Request):
     user = request.session.get("user")
     if not user or str(user.get("id")) != str(user_id):
+        print(f"❌ Forbidden: session user {user.get('id')} tried to access {user_id}")
         raise HTTPException(status_code=403, detail="Forbidden")
 
     completed = db.get_completed_tasks(user_id)
@@ -134,6 +137,7 @@ def get_summary(user_id: str, request: Request):
 def get_xp(user_id: str, request: Request):
     user = request.session.get("user")
     if not user or str(user.get("id")) != str(user_id):
+        print(f"❌ Forbidden: session user {user.get('id')} tried to access {user_id}")
         raise HTTPException(status_code=403, detail="Forbidden")
 
     completed = db.get_completed_tasks(user_id)
@@ -150,6 +154,7 @@ def get_xp(user_id: str, request: Request):
 def get_analytics(user_id: str, request: Request):
     user = request.session.get("user")
     if not user or str(user.get("id")) != str(user_id):
+        print(f"❌ Forbidden: session user {user.get('id')} tried to access {user_id}")
         raise HTTPException(status_code=403, detail="Forbidden")
 
     completed_tasks = db.get_completed_tasks(user_id)
