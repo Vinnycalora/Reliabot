@@ -10,7 +10,6 @@ const AnalyticsChart = ({ userId }) => {
         fetch(`${import.meta.env.VITE_API_BASE_URL}/analytics/${userId}`)
             .then(res => res.json())
             .then(result => {
-                // Combine both metrics per date
                 const combined = {};
 
                 for (const [date, count] of Object.entries(result.daily_counts)) {
@@ -37,11 +36,26 @@ const AnalyticsChart = ({ userId }) => {
                     <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                         <XAxis dataKey="date" stroke="#ccc" />
-                        <YAxis stroke="#ccc" />
+                        <YAxis yAxisId="left" stroke="#38bdf8" />
+                        <YAxis yAxisId="right" orientation="right" stroke="#facc15" />
                         <Tooltip />
                         <Legend />
-                        <Line type="monotone" dataKey="tasks" stroke="#38bdf8" strokeWidth={2} name="Tasks Completed" />
-                        <Line type="monotone" dataKey="time" stroke="#facc15" strokeWidth={2} name="Avg. Completion Time (min)" />
+                        <Line
+                            type="monotone"
+                            dataKey="tasks"
+                            yAxisId="left"
+                            stroke="#38bdf8"
+                            strokeWidth={2}
+                            name="Tasks Completed"
+                        />
+                        <Line
+                            type="monotone"
+                            dataKey="time"
+                            yAxisId="right"
+                            stroke="#facc15"
+                            strokeWidth={2}
+                            name="Avg. Completion Time (min)"
+                        />
                     </LineChart>
                 </ResponsiveContainer>
             ) : (
@@ -52,4 +66,5 @@ const AnalyticsChart = ({ userId }) => {
 };
 
 export default AnalyticsChart;
+
 
