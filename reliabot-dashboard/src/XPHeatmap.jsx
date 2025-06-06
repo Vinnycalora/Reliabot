@@ -1,18 +1,20 @@
 ﻿import React, { useEffect, useState } from 'react';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
-import { subDays } from 'date-fns';
+import './calendar-custom.css'; // optional custom style
 
-function XPHeatmap({ userId }) {
+const XPHeatmap = ({ userId }) => {
     const [heatmapData, setHeatmapData] = useState([]);
 
     useEffect(() => {
         if (!userId) return;
 
-        fetch(`${import.meta.env.VITE_API_BASE_URL}/analytics/${userId}`)
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/xp_heatmap/${userId}`, {
+            credentials: 'include'
+        })
             .then(res => res.json())
             .then(data => {
-                const mapped = Object.entries(data?.daily_counts || {}).map(([date, count]) => ({
+                const mapped = Object.entries(data || {}).map(([date, count]) => ({
                     date,
                     count: count || 0,
                 }));
@@ -23,41 +25,34 @@ function XPHeatmap({ userId }) {
             });
     }, [userId]);
 
-    const hasData = heatmapData.some(item => item.count > 0);
-
     return (
-        <div className="mt-8">
-            <h3 className="text-xl font-semibold mb-2 text-orange-400">🔥 XP Heatmap</h3>
-            {hasData ? (
+        <div className="bg-[#1a1a1d] p-6 rounded-xl border border-gray-700 mt-6">
+            <h3 className="text-xl font-semibold mb-4 text-orange-400">🔥 XP Heatmap</h3>
+            {heatmapData.length > 0 ? (
                 <CalendarHeatmap
-                    startDate={subDays(new Date(), 180)}
+                    startDate={new Date(new Date().setDate(new Date().getDate() - 180))}
                     endDate={new Date()}
                     values={heatmapData}
-                    classForValue={(value) => {
-                        if (!value || !value.count) return 'color-empty';
-                        if (value.count >= 4) return 'color-scale-4';
-                        if (value.count >= 3) return 'color-scale-3';
-                        if (value.count >= 2) return 'color-scale-2';
-                        return 'color-scale-1';
+                    classForValue={value => {
+                        if (!value || value.count === 0) return 'color-empty';
+                        if (value.count < 2) return 'color-scale-1';
+                        if (value.count < 4) return 'color-scale-2';
+                        if (value.count < 6) return 'color-scale-3';
+                        return 'color-scale-4';
                     }}
-                    tooltipDataAttrs={value => {
-                        if (!value?.date) return null;
-                        return { 'data-tip': `${value.date}: ${value.count} XP` };
-                    }}
-                    showWeekdayLabels={true}
+                    tooltipDataAttrs={value =>
+                        value.date
+                            ? { 'data-tip': `${value.date}: ${value.count} XP` }
+                            : { 'data-tip': 'No data' }
+                    }
+                    showWeekdayLabels
                 />
             ) : (
-                <p className="text-gray-400 mt-2">No XP data available yet.</p>
+                <p className="text-gray-400">No XP heatmap data available.</p>
             )}
-            <style>{`
-                .color-empty { fill: #2f2f2f; }
-                .color-scale-1 { fill: #003f5c; }
-                .color-scale-2 { fill: #2f4b7c; }
-                .color-scale-3 { fill: #665191; }
-                .color-scale-4 { fill: #a05195; }
-            `}</style>
         </div>
     );
-}
+};
 
 export default XPHeatmap;
+
