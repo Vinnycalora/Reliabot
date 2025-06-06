@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI, HTTPException, Request
+﻿﻿from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
@@ -49,8 +49,6 @@ class TaskCreate(BaseModel):
     labels: Optional[str] = None
     priority: Optional[str] = None
 
-
-
 class DoneTask(BaseModel):
     user_id: str
     task: str
@@ -72,7 +70,6 @@ async def create_task(request: Request, task: TaskCreate):
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
-                # Ensure user exists in the users table
                 cur.execute(
                     """
                     INSERT INTO users (user_id, streak, last_check)
@@ -82,7 +79,6 @@ async def create_task(request: Request, task: TaskCreate):
                     (user_id, 0, None)
                 )
 
-                # Now insert the task
                 cur.execute(
                     """
                     INSERT INTO tasks (user_id, task, created_at, due_at, description, recurrence, labels, priority)
@@ -98,19 +94,15 @@ async def create_task(request: Request, task: TaskCreate):
 
     return {"message": "Task added"}
 
-
-
 @app.post("/done")
 def mark_task_done(item: DoneTask):
     success = db.complete_task(item.user_id, item.task)
     if not success:
         raise HTTPException(status_code=404, detail="Task not found.")
-    
-    # 🔥 Update streak here
-    db.update_streak(item.user_id)
-    
-    return {"message": "Task marked as done."}
 
+    db.update_streak(item.user_id)
+
+    return {"message": "Task marked as done."}
 
 @app.get("/streak/{user_id}")
 def get_streak(user_id: str):
@@ -124,6 +116,18 @@ def get_summary(user_id: str):
         "completed_this_week": len(this_week),
         "total_completed": len(completed),
         "streak": db.get_streak(user_id)
+    }
+
+@app.get("/xp/{user_id}")
+def get_xp(user_id: str):
+    completed = db.get_completed_tasks(user_id)
+    xp = len(completed) * 10
+    level = xp // 100
+    progress = xp % 100
+    return {
+        "xp": xp,
+        "level": level,
+        "progress": progress
     }
 
 @app.get("/analytics/{user_id}")
@@ -220,3 +224,4 @@ def startup():
 @app.on_event("startup")
 def startup_migrate():
     migrate_tasks_table()
+

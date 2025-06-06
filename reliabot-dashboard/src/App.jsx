@@ -5,6 +5,8 @@ import Navbar from './Navbar';
 import GlitchLoader from './GlitchLoader';
 import CalendarView from './CalendarView';
 import AnalyticsChart from './AnalyticsChart';
+import XPHeatmap from './XPHeatmap';
+import XPBar from './XPBar';
 
 function App() {
     const [currentTab, setCurrentTab] = useState('Status');
@@ -22,7 +24,7 @@ function App() {
     });
 
 
-    
+
 
 
     const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -159,7 +161,7 @@ function App() {
                                             const priority = priorityInput?.value || null;
 
 
-                                            
+
 
                                             if (!newTask) return;
 
@@ -413,7 +415,9 @@ function App() {
                                         <div className="bg-[#0e0e10] p-5 rounded-2xl border border-gray-700 shadow-xl">📈 {summary?.totalCompleted || 0} total</div>
                                     </div>
 
+                                    <XPBar userId={user.id} />
                                     <AnalyticsChart userId={user.id} />
+                                    <XPHeatmap userId={user.id} />
 
                                     {!summary && <GlitchLoader />}
                                 </div>
@@ -427,7 +431,6 @@ function App() {
 }
 
 export default App;
-
 
 
 
