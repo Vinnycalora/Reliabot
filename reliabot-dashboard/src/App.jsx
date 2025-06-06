@@ -6,7 +6,6 @@ import GlitchLoader from './GlitchLoader';
 import CalendarView from './CalendarView';
 import AnalyticsChart from './AnalyticsChart';
 import XPHeatmap from './XPHeatmap';
-import XPBar from './XPBar';
 
 function App() {
     const [currentTab, setCurrentTab] = useState('Status');
@@ -18,7 +17,7 @@ function App() {
     const [showCompleted, setShowCompleted] = useState(false);
     const [filter, setFilter] = useState({
         label: '',
-        priority: '', //testing git
+        priority: '',
         status: 'all', // all, active, completed
         search: '',
     });
@@ -38,7 +37,7 @@ function App() {
     }, []);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !user.id) return;
 
         const fetchData = async () => {
             try {
@@ -415,7 +414,6 @@ function App() {
                                         <div className="bg-[#0e0e10] p-5 rounded-2xl border border-gray-700 shadow-xl">📈 {summary?.totalCompleted || 0} total</div>
                                     </div>
 
-                                    <XPBar userId={user.id} />
                                     <AnalyticsChart userId={user.id} />
                                     <XPHeatmap userId={user.id} />
 
