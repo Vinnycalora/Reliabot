@@ -12,6 +12,14 @@ function Navbar() {
             .catch(() => { });
     }, []);
 
+    const handleLogout = async () => {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/logout`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+        window.location.reload();
+    };
+
     return (
         <header className="w-full bg-[#0e0e10] text-white px-6 py-4 shadow-md border-b border-gray-800 flex items-center justify-between">
             <h1 className="text-2xl font-semibold tracking-wide text-sky-400 drop-shadow-md">
@@ -20,7 +28,15 @@ function Navbar() {
             <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-400">v1.0</span>
                 {user ? (
-                    <span className="text-white text-sm">👤 {user.username}</span>
+                    <>
+                        <span className="text-white text-sm">👤 {user.username}</span>
+                        <button
+                            onClick={handleLogout}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition duration-200"
+                        >
+                            Log Out
+                        </button>
+                    </>
                 ) : (
                     <a
                         href={`https://discord.com/oauth2/authorize?client_id=${import.meta.env.VITE_DISCORD_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_DISCORD_REDIRECT_URI}&response_type=code&scope=identify`}
