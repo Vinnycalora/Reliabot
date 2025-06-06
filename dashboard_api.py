@@ -2,7 +2,7 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 from typing import Optional
 from collections import defaultdict
 from datetime import datetime
@@ -15,7 +15,6 @@ import db
 from db import get_connection, migrate_tasks_table
 import traceback
 from fastapi import Path
-
 
 load_dotenv()
 
@@ -42,9 +41,9 @@ app.add_middleware(
 
 # === Models ===
 class TaskCreate(BaseModel):
-    name: str
+    name: constr(max_length=255)
     due_at: Optional[str] = None
-    description: Optional[str] = None
+    description: Optional[constr(max_length=500)] = None
     recurrence: Optional[str] = None
     labels: Optional[str] = None
     priority: Optional[str] = None
@@ -55,7 +54,10 @@ class DoneTask(BaseModel):
 
 # === Routes ===
 @app.get("/tasks/{user_id}")
-def get_tasks(user_id: str):
+def get_tasks(user_id: str, request: Request):
+    user = request.session.get("user")
+    if not user or str(user["id"]) != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
     return db.get_tasks(user_id)
 
 @app.post("/task")
@@ -95,21 +97,31 @@ async def create_task(request: Request, task: TaskCreate):
     return {"message": "Task added"}
 
 @app.post("/done")
-def mark_task_done(item: DoneTask):
+def mark_task_done(item: DoneTask, request: Request):
+    user = request.session.get("user")
+    if not user or str(user["id"]) != item.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     success = db.complete_task(item.user_id, item.task)
     if not success:
         raise HTTPException(status_code=404, detail="Task not found.")
 
     db.update_streak(item.user_id)
-
     return {"message": "Task marked as done."}
 
 @app.get("/streak/{user_id}")
-def get_streak(user_id: str):
+def get_streak(user_id: str, request: Request):
+    user = request.session.get("user")
+    if not user or str(user["id"]) != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
     return {"streak": db.get_streak(user_id)}
 
 @app.get("/summary/{user_id}")
-def get_summary(user_id: str):
+def get_summary(user_id: str, request: Request):
+    user = request.session.get("user")
+    if not user or str(user["id"]) != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     completed = db.get_completed_tasks(user_id)
     this_week = [t for t in completed if (datetime.now().date() - datetime.strptime(t[1], "%Y-%m-%d").date()).days <= 7]
     return {
@@ -119,7 +131,11 @@ def get_summary(user_id: str):
     }
 
 @app.get("/xp/{user_id}")
-def get_xp(user_id: str):
+def get_xp(user_id: str, request: Request):
+    user = request.session.get("user")
+    if not user or str(user["id"]) != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     completed = db.get_completed_tasks(user_id)
     xp = len(completed) * 10
     level = xp // 100
@@ -131,9 +147,12 @@ def get_xp(user_id: str):
     }
 
 @app.get("/analytics/{user_id}")
-def get_analytics(user_id: str):
-    completed_tasks = db.get_completed_tasks(user_id)
+def get_analytics(user_id: str, request: Request):
+    user = request.session.get("user")
+    if not user or str(user["id"]) != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
+    completed_tasks = db.get_completed_tasks(user_id)
     daily_counts = defaultdict(int)
     completion_times_by_day = defaultdict(list)
 
@@ -161,6 +180,11 @@ def get_analytics(user_id: str):
         "daily_counts": dict(daily_counts),
         "completion_time_minutes": average_completion_time
     }
+
+@app.post("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return {"message": "Logged out"}
 
 @app.get("/status")
 def get_status():
@@ -224,4 +248,3 @@ def startup():
 @app.on_event("startup")
 def startup_migrate():
     migrate_tasks_table()
-
