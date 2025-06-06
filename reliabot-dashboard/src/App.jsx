@@ -14,6 +14,13 @@ function App() {
     const [summary, setSummary] = useState(null);
     const [user, setUser] = useState(undefined);
     const [showCompleted, setShowCompleted] = useState(false);
+    const [filter, setFilter] = useState({
+        label: '',
+        priority: '',
+        status: 'all', // all, active, completed
+        search: '',
+    });
+
 
     
 
@@ -229,107 +236,158 @@ function App() {
                                         <button type="submit" className="px-6 py-3 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-semibold">➕ Add Task</button>
                                     </form>
                                     {tasks.length > 0 ? (
-                                        <ul className="space-y-4">
-                                            {tasks
-                                                .filter((task) => showCompleted || !task.completed)
-                                                .map((task) => (
-                                                <li key={task.id || task.task} className="p-4 bg-[#121214] border border-gray-700 rounded-xl">
-                                                        <div className="flex justify-between items-start">
-                                                            <span className={task.completed ? 'line-through text-gray-500' : 'text-white'}>
-                                                                {task.task}
-                                                            </span>
-                                                            {!task.completed && (
-                                                                <div className="flex flex-col items-end gap-1">
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            fetch(`${BASE_URL}/done`, {
-                                                                                method: 'POST',
-                                                                                headers: { 'Content-Type': 'application/json' },
-                                                                                body: JSON.stringify({ user_id: user.id, task: task.task }),
-                                                                            })
-                                                                                .then((res) => {
-                                                                                    if (!res.ok) throw new Error('Failed to mark task as done');
-                                                                                    return res.json();
-                                                                                })
-                                                                                .then(() => {
-                                                                                    setTasks((prev) =>
-                                                                                        prev.map((t) =>
-                                                                                            t.task === task.task
-                                                                                                ? { ...t, completed: 1, completed_at: new Date().toISOString() }
-                                                                                                : t
-                                                                                        )
-                                                                                    );
-                                                                                })
-                                                                                .catch((err) => {
-                                                                                    console.error('Mark done failed:', err);
-                                                                                    alert('Could not mark as done.');
-                                                                                });
-                                                                        }}
-                                                                        className="text-sm text-sky-400 hover:text-sky-300"
-                                                                    >
-                                                                        Mark Done
-                                                                    </button>
+                                        <>
+                                            <div className="mb-4 flex flex-wrap gap-4 items-center">
+                                                <input
+                                                    placeholder="Search..."
+                                                    value={filter.search}
+                                                    onChange={(e) => setFilter((f) => ({ ...f, search: e.target.value }))}
+                                                    className="p-2 rounded bg-[#1a1a1d] border border-gray-700 text-white"
+                                                />
+                                                <select
+                                                    value={filter.label}
+                                                    onChange={(e) => setFilter((f) => ({ ...f, label: e.target.value }))}
+                                                    className="p-2 rounded bg-[#1a1a1d] border border-gray-700 text-white"
+                                                >
+                                                    <option value="">All Labels</option>
+                                                    {[...new Set(tasks.flatMap(t => (t.labels || '').split(',').map(l => l.trim())))].map((label, i) =>
+                                                        label && <option key={i} value={label}>{label}</option>
+                                                    )}
+                                                </select>
+                                                <select
+                                                    value={filter.priority}
+                                                    onChange={(e) => setFilter((f) => ({ ...f, priority: e.target.value }))}
+                                                    className="p-2 rounded bg-[#1a1a1d] border border-gray-700 text-white"
+                                                >
+                                                    <option value="">All Priorities</option>
+                                                    <option value="high">High</option>
+                                                    <option value="medium">Medium</option>
+                                                    <option value="low">Low</option>
+                                                </select>
+                                                <select
+                                                    value={filter.status}
+                                                    onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value }))}
+                                                    className="p-2 rounded bg-[#1a1a1d] border border-gray-700 text-white"
+                                                >
+                                                    <option value="all">All Tasks</option>
+                                                    <option value="active">Active</option>
+                                                    <option value="completed">Completed</option>
+                                                </select>
+                                            </div>
 
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            fetch(`${BASE_URL}/task/${task.id}`, {
-                                                                                method: 'DELETE',
-                                                                                credentials: 'include',
-                                                                            })
-                                                                                .then((res) => {
-                                                                                    if (!res.ok) throw new Error('Failed to delete task');
-                                                                                    setTasks((prev) => prev.filter((t) => t.id !== task.id));
+                                            <ul className="space-y-4">
+                                                {tasks
+                                                    .filter((task) => {
+                                                        const matchesLabel = !filter.label || (task.labels || '').split(',').map(l => l.trim()).includes(filter.label);
+                                                        const matchesPriority = !filter.priority || task.priority === filter.priority;
+                                                        const matchesStatus =
+                                                            filter.status === 'all' ||
+                                                            (filter.status === 'completed' && task.completed) ||
+                                                            (filter.status === 'active' && !task.completed);
+                                                        const matchesSearch =
+                                                            !filter.search || task.task.toLowerCase().includes(filter.search.toLowerCase());
+                                                        const showBasedOnCompleted = showCompleted || !task.completed;
+                                                        return matchesLabel && matchesPriority && matchesStatus && matchesSearch && showBasedOnCompleted;
+                                                    })
+                                                    .map((task) => (
+                                                        <li key={task.id || task.task} className="p-4 bg-[#121214] border border-gray-700 rounded-xl">
+                                                            <div className="flex justify-between items-start">
+                                                                <span className={task.completed ? 'line-through text-gray-500' : 'text-white'}>
+                                                                    {task.task}
+                                                                </span>
+                                                                {!task.completed && (
+                                                                    <div className="flex flex-col items-end gap-1">
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                fetch(`${BASE_URL}/done`, {
+                                                                                    method: 'POST',
+                                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                                    body: JSON.stringify({ user_id: user.id, task: task.task }),
                                                                                 })
-                                                                                .catch((err) => {
-                                                                                    console.error('Delete failed:', err);
-                                                                                    alert('Could not delete task.');
-                                                                                });
-                                                                        }}
-                                                                        className="text-sm text-red-400 hover:text-red-300"
-                                                                    >
-                                                                        🗑 Delete
-                                                                    </button>
+                                                                                    .then((res) => {
+                                                                                        if (!res.ok) throw new Error('Failed to mark task as done');
+                                                                                        return res.json();
+                                                                                    })
+                                                                                    .then(() => {
+                                                                                        setTasks((prev) =>
+                                                                                            prev.map((t) =>
+                                                                                                t.task === task.task
+                                                                                                    ? { ...t, completed: 1, completed_at: new Date().toISOString() }
+                                                                                                    : t
+                                                                                            )
+                                                                                        );
+                                                                                    })
+                                                                                    .catch((err) => {
+                                                                                        console.error('Mark done failed:', err);
+                                                                                        alert('Could not mark as done.');
+                                                                                    });
+                                                                            }}
+                                                                            className="text-sm text-sky-400 hover:text-sky-300"
+                                                                        >
+                                                                            Mark Done
+                                                                        </button>
+
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                fetch(`${BASE_URL}/task/${task.id}`, {
+                                                                                    method: 'DELETE',
+                                                                                    credentials: 'include',
+                                                                                })
+                                                                                    .then((res) => {
+                                                                                        if (!res.ok) throw new Error('Failed to delete task');
+                                                                                        setTasks((prev) => prev.filter((t) => t.id !== task.id));
+                                                                                    })
+                                                                                    .catch((err) => {
+                                                                                        console.error('Delete failed:', err);
+                                                                                        alert('Could not delete task.');
+                                                                                    });
+                                                                            }}
+                                                                            className="text-sm text-red-400 hover:text-red-300"
+                                                                        >
+                                                                            🗑 Delete
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-xs text-gray-500 mt-1">
+                                                                Created: {new Date(task.created_at).toLocaleString()}
+                                                                {task.completed_at && <> | Completed: {new Date(task.completed_at).toLocaleString()}</>}
+                                                                {task.due_at && <> | Due: {new Date(task.due_at).toLocaleString()}</>}
+                                                            </div>
+                                                            {task.description && (
+                                                                <div className="text-sm text-gray-300 mt-1">📝 {task.description}</div>
+                                                            )}
+                                                            {task.recurrence && (
+                                                                <div className="text-sm text-indigo-400 mt-1">🔁 Repeats: {task.recurrence}</div>
+                                                            )}
+                                                            {task.labels && (
+                                                                <div className="mt-1 flex flex-wrap gap-2">
+                                                                    {task.labels.split(',').map((label, i) => (
+                                                                        <span
+                                                                            key={i}
+                                                                            className="bg-indigo-700 text-white text-xs px-2 py-1 rounded-full"
+                                                                        >
+                                                                            #{label.trim()}
+                                                                        </span>
+                                                                    ))}
                                                                 </div>
                                                             )}
-                                                        </div>
-                                                    <div className="text-xs text-gray-500 mt-1">
-                                                        Created: {new Date(task.created_at).toLocaleString()}
-                                                        {task.completed_at && <> | Completed: {new Date(task.completed_at).toLocaleString()}</>}
-                                                        {task.due_at && <> | Due: {new Date(task.due_at).toLocaleString()}</>}
-                                                    </div>
-                                                    {task.description && (
-                                                        <div className="text-sm text-gray-300 mt-1">📝 {task.description}</div>
-                                                    )}
-                                                    {task.recurrence && (
-                                                        <div className="text-sm text-indigo-400 mt-1">🔁 Repeats: {task.recurrence}</div>
-                                                    )}
-                                                    {task.labels && (
-                                                        <div className="mt-1 flex flex-wrap gap-2">
-                                                            {task.labels.split(',').map((label, i) => (
-                                                                <span
-                                                                    key={i}
-                                                                    className="bg-indigo-700 text-white text-xs px-2 py-1 rounded-full"
-                                                                >
-                                                                    #{label.trim()}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                    {task.priority && (
-                                                        <div className="text-xs mt-1">
-                                                            <span
-                                                                className={`px-2 py-1 rounded-full font-bold ${task.priority === 'high' ? 'bg-red-600' :
-                                                                        task.priority === 'medium' ? 'bg-yellow-500 text-black' :
-                                                                            'bg-green-600'
-                                                                    }`}
-                                                            >
-                                                                ⭐ {task.priority.toUpperCase()}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </li>
-                                            ))}
-                                        </ul>
+                                                            {task.priority && (
+                                                                <div className="text-xs mt-1">
+                                                                    <span
+                                                                        className={`px-2 py-1 rounded-full font-bold ${task.priority === 'high' ? 'bg-red-600' :
+                                                                            task.priority === 'medium' ? 'bg-yellow-500 text-black' :
+                                                                                'bg-green-600'
+                                                                            }`}
+                                                                    >
+                                                                        ⭐ {task.priority.toUpperCase()}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </li>
+                                                    ))}
+                                            </ul>
+                                        </>
                                     ) : (
                                         <GlitchLoader />
                                     )}
