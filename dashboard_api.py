@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 import db
 from db import get_connection, migrate_tasks_table
 import traceback
+from fastapi import Path
 
 
 load_dotenv()
@@ -192,6 +193,18 @@ async def discord_oauth(request: Request, code: str):
     }
 
     return RedirectResponse(url="https://reliabot.netlify.app")
+
+@app.delete("/task/{task_id}")
+def delete_task(task_id: int, request: Request):
+    user = request.session.get("user")
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM tasks WHERE id = %s AND user_id = %s", (task_id, str(user["id"])))
+            conn.commit()
+    return {"message": "Task deleted"}
 
 # === Startup ===
 @app.on_event("startup")

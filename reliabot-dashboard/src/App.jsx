@@ -13,6 +13,8 @@ function App() {
     const [streak, setStreak] = useState(null);
     const [summary, setSummary] = useState(null);
     const [user, setUser] = useState(undefined);
+    const [showCompleted, setShowCompleted] = useState(false);
+
     
 
 
@@ -120,6 +122,17 @@ function App() {
                             <motion.div key="tasks" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
                                 <div>
                                     <h2 className="text-3xl font-semibold text-sky-400 mb-6">📝 Your Tasks</h2>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <label className="text-sm text-gray-300 flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={showCompleted}
+                                                onChange={(e) => setShowCompleted(e.target.checked)}
+                                                className="accent-sky-600"
+                                            />
+                                            Show completed tasks
+                                        </label>
+                                    </div>
                                     <form
                                         onSubmit={(e) => {
                                             e.preventDefault();
@@ -217,40 +230,64 @@ function App() {
                                     </form>
                                     {tasks.length > 0 ? (
                                         <ul className="space-y-4">
-                                            {tasks.map((task) => (
+                                            {tasks
+                                                .filter((task) => showCompleted || !task.completed)
+                                                .map((task) => (
                                                 <li key={task.id || task.task} className="p-4 bg-[#121214] border border-gray-700 rounded-xl">
                                                     <div className="flex justify-between items-center">
                                                         <span className={task.completed ? 'line-through text-gray-500' : 'text-white'}>{task.task}</span>
                                                         {!task.completed && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    fetch(`${BASE_URL}/done`, {
-                                                                        method: 'POST',
-                                                                        headers: { 'Content-Type': 'application/json' },
-                                                                        body: JSON.stringify({ user_id: user.id, task: task.task }),
-                                                                    })
-                                                                        .then((res) => {
-                                                                            if (!res.ok) throw new Error('Failed to mark task as done');
-                                                                            return res.json();
+                                                            <>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        fetch(`${BASE_URL}/done`, {
+                                                                            method: 'POST',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({ user_id: user.id, task: task.task }),
                                                                         })
-                                                                        .then(() => {
-                                                                            setTasks((prev) =>
-                                                                                prev.map((t) =>
-                                                                                    t.task === task.task
-                                                                                        ? { ...t, completed: 1, completed_at: new Date().toISOString() }
-                                                                                        : t
-                                                                                )
-                                                                            );
+                                                                            .then((res) => {
+                                                                                if (!res.ok) throw new Error('Failed to mark task as done');
+                                                                                return res.json();
+                                                                            })
+                                                                            .then(() => {
+                                                                                setTasks((prev) =>
+                                                                                    prev.map((t) =>
+                                                                                        t.task === task.task
+                                                                                            ? { ...t, completed: 1, completed_at: new Date().toISOString() }
+                                                                                            : t
+                                                                                    )
+                                                                                );
+                                                                            })
+                                                                            .catch((err) => {
+                                                                                console.error('Mark done failed:', err);
+                                                                                alert('Could not mark as done.');
+                                                                            });
+                                                                    }}
+                                                                    className="text-sm text-sky-400 hover:text-sky-300"
+                                                                >
+                                                                    Mark Done
+                                                                </button>
+
+                                                                <button
+                                                                    onClick={() => {
+                                                                        fetch(`${BASE_URL}/task/${task.id}`, {
+                                                                            method: 'DELETE',
+                                                                            credentials: 'include',
                                                                         })
-                                                                        .catch((err) => {
-                                                                            console.error('Mark done failed:', err);
-                                                                            alert('Could not mark as done.');
-                                                                        });
-                                                                }}
-                                                                className="text-sm text-sky-400 hover:text-sky-300"
-                                                            >
-                                                                Mark Done
-                                                            </button>
+                                                                            .then((res) => {
+                                                                                if (!res.ok) throw new Error('Failed to delete task');
+                                                                                setTasks((prev) => prev.filter((t) => t.id !== task.id));
+                                                                            })
+                                                                            .catch((err) => {
+                                                                                console.error('Delete failed:', err);
+                                                                                alert('Could not delete task.');
+                                                                            });
+                                                                    }}
+                                                                    className="text-sm text-red-400 hover:text-red-300 ml-3"
+                                                                >
+                                                                    🗑 Delete
+                                                                </button>
+                                                            </>
                                                         )}
                                                     </div>
                                                     <div className="text-xs text-gray-500 mt-1">
